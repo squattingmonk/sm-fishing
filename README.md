@@ -6,7 +6,7 @@ This is a highly customizable and extensible fishing system for Neverwinter Nigh
 This system is currently in **alpha status**. While it is usable, it should be considered unstable and unsuitable for production use.
 
 ### Features
-- **Script-driven**: All customization is done by editing the script `fish_i_main.nss`. No need to mess with item inventories or put a ton of variables on objects.
+- **Script-driven**: All customization is done by editing the script `fish_c_config.nss`. No need to mess with item inventories or put a ton of variables on objects.
 - **Documented**: The code is thoroughly documented to make it easy to use. I also plan to provide quite a few examples of some of the different extensions mentioned below.
 - **Customizable fish**: Add as many or as few as you want. You can change how easy they are to catch and what bait and equipment they can be caught with.
 - **Customizable environments**: Define your own environments (e.g., "freshwater", "lake", or "Murkwater Pond") and specify how common fish are in those environments.
