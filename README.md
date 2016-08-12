@@ -33,13 +33,13 @@ Import the following scripts into your module:
 - `fish_t_equipment.nss`
 
 ### Blueprints
-Blueprint               Required    Function
----------               --------    --------
-`fish_fishingspot.utw`  yes         Waypoint denoting fishing spots
-`fish_t_pole.uti`       no          Demo fishing pole item
-`fish_t_spear.uti`      no          Demo fishing spear item
-`fish_trout.uti`        no          Demo fish item
-`worm.uti`              no          Demo bait item
+| Blueprint              | Required | Function |
+| ---------              | -------- | -------- |
+| `fish_fishingspot.utw` | yes      | Waypoint denoting fishing spots |
+| `fish_t_pole.uti`      | no       | Demo fishing pole item |
+| `fish_t_spear.uti`     | no       | Demo fishing spear item |
+| `fish_trout.uti`       | no       | Demo fish item |
+| `worm.uti`             | no       | Demo bait item| 
 
 ### Fishing Spots
 Place fishing spot waypoints in the water wherever you want the PC to be able to fish. To define the type of environment the fishing spot represents, change the name of the waypoint to the name of the environment.
