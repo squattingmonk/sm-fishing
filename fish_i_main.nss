@@ -118,6 +118,15 @@ int VerifyFishingSpot(float fMax);
 // Note: This is an internal function and should not be used by the builder.
 int VerifyFishingBait();
 
+// ---< MergeFishList >---
+// ---< fish_i_main >---
+// Merges sSource's fish list into sTarget's fish list of sListType (can be an
+// environment, bait, or type of equipment). Fish are not added twice:
+// if a fish exists in sTarget's list, its frequency or modifiers will not be
+// overwritten by those in sSource's list.
+// Note: This is an internal function and should not be used by the builder.
+void MergeFishList(string sTarget, string sSource, string sListType);
+
 // ---< BuildFishList >---
 // ---< fish_i_main >---
 // Resolves inheritance lists for sItem (can be an environment, bait, or type of
@@ -174,24 +183,24 @@ void FishDebug(string sMessage);
 // found in "Murkwater Lake".
 //
 // Example usage for baits:
-// InheritFish("insect, worm, minnow", "live bait");
+// InheritFish("insect, worm, minnow", "live_bait");
 // InheritFish("mayfly, beetle", "insect");
-// In this case, every fish that eats "live bait" will also eat "insect", "worm"
+// In this case, every fish that eats "live_bait" will also eat "insect", "worm"
 // and "minnow"; every fish that eats in "insect" or "live bait" will also eat
 // "mayfly" and "beetle".
 //
 // Example usage for equipment:
-// InheritFish("light pole, standard pole, heavy pole", "pole");
-// InheritFish("cane pole, willow rod", "light pole");
+// InheritFish("light_pole, standard_pole, heavy_pole", "pole");
+// InheritFish("cane_pole, willow_rod", "light_pole");
 // In this case, every fish that can be caught with a "pole" can also be caught
-// with a "light pole"; every fish that can be caught with a "pole" or "light
-// pole" can also be caught with a "cane pole" or "willow rod".
+// with a "light_pole"; every fish that can be caught with a "pole" or
+// "light_pole" can also be caught with a "cane_pole" or "willow_rod".
 void InheritFish(string sChildren, string sParent);
 
 // ---< GetInheritsFish >---
 // ---< fish_i_main >---
 // Returns whether sChild (an environment, bait, or equipment type) inherits
-// fish from sParent.
+// fish from sParent, however remotely.
 int GetInheritsFish(string sChild, string sParent);
 
 // ---< AddFishEnvironments >---
@@ -483,6 +492,7 @@ int HandleFishingBait(string sSuccess, string sError)
 {
     // Add the equipment type to our globals.
     Fish.Type = GetFishingEquipmentType(Fish.Item);
+    FishDebug("Handling bait for equipment: " + Fish.Type);
 
     // If this isn't bait, abort.
     if (Fish.Type != "bait")
@@ -530,46 +540,53 @@ int VerifyFishingBait()
     return (Fish.Bait != "" || Fish.Usage != FISH_BAIT_IS_REQUIRED);
 }
 
+void MergeFishList(string sTarget, string sSource, string sListType)
+{
+    FishDebug("Merging " + sSource + "'s " + sListType + " list into " + sTarget + "'s list");
+    int i, nFreq, nCount = GetStringListCount(Fish.Data, sListType + sSource);
+    string sFish;
+
+    for (i = 0; i < nCount; i++)
+    {
+        FishDebug("Processing item " + IntToString(i));
+
+        // Get the fish from the listed parent and try adding it to the
+        // child's fish list.
+        sFish = GetStringListItem(Fish.Data, i, sListType + sSource);
+        if (AddStringListItem(Fish.Data, sFish, sListType + sTarget, TRUE))
+        {
+            FishDebug("Adding " + sTarget + " to " + sFish + "'s " + sListType + " list.");
+
+            // We need to add the item to the fish's list.
+            AddStringListItem(Fish.Data, sTarget, sFish + sListType);
+
+            // Set the frequency or modifier.
+            nFreq = GetLocalInt(Fish.Data, sFish + sListType + sSource);
+                    SetLocalInt(Fish.Data, sFish + sListType + sTarget, nFreq);
+        }
+    }
+}
+
+// Multiple inheritance version
 int BuildFishList(string sItem, string sListType)
 {
     // Sanity check
     if (sItem == "") return 0;
 
-    // See if this list has already been built.
+    // See if this list has already been built. If so, we can short-circuit.
     if (GetLocalInt(Fish.Data, sItem))
         return GetStringListCount(Fish.Data, sListType + sItem);
 
-    // It hasn't, so let's build it by walking the inheritance tree.
-    int i, nCount, nFreq;
-    string sFish, sParent = GetLocalString(Fish.Data, sItem + FISH_INHERITS);
-
-    while (sParent != "")
+    // It hasn't. Let's check any parents it has and merge them into the list.
+    string sParent, sParents = GetLocalString(Fish.Data, sItem + FISH_INHERITS);
+    int i, nCount = GetListCount(sParents);
+    for (i = 0; i < nCount; i++)
     {
-        FishDebug(sItem + " inherits from " + sParent);
-
-        nCount = GetStringListCount(Fish.Data, sListType + sParent);
-        for (i = 0; i < nCount; i++)
-        {
-            FishDebug("Processing the " + IntToString(i) + "th item.");
-
-            // Get the fish from the listed parent and try adding it to the
-            // child's fish list.
-            sFish = GetStringListItem(Fish.Data, i, sListType + sParent);
-            if (AddStringListItem(Fish.Data, sFish, sListType + sItem, TRUE))
-            {
-                FishDebug("Adding " + sItem + " to " + sFish + "'s " + sListType + " list.");
-
-                // We need to add the item to the fish's list.
-                AddStringListItem(Fish.Data, sItem, sFish + sListType);
-
-                // Set the frequency or modifier.
-                nFreq = GetLocalInt(Fish.Data, sFish + sListType + sParent);
-                        SetLocalInt(Fish.Data, sFish + sListType + sItem, nFreq);
-            }
-        }
-
-        // Get the parent's parent.
-        sParent = GetLocalString(Fish.Data, sParent + FISH_INHERITS);
+        // The parent must be resolved before we can merge it into the child.
+        sParent = GetListItem(sParents, i);
+        FishDebug("Building " + sListType + " list for " + sParent);
+        BuildFishList(sParent, sListType);
+        MergeFishList(sItem, sParent, sListType);
     }
 
     // Mark the list as built.
@@ -582,10 +599,27 @@ void ActionFish(string sPrefix)
     // Run the config function to see if we're allowed to fish.
     if (!OnFishingStart()) return;
 
+    // Environments can be combined into a comma-separated list. Let's check if
+    // this environment's fish list has been built. If not, we need to make sure
+    // any contributing environments are set up before building the fish list.
+    int i, nCount = GetListCount(Fish.Environment);
+    if (nCount > 1 && !GetLocalInt(Fish.Data, Fish.Environment))
+    {
+        // Iterate through the list, build the component environment, and merge.
+        FishDebug("Building combined environment " + Fish.Environment);
+        string sEnvironment;
+        for (i = 0; i < nCount; i++)
+        {
+            sEnvironment = GetListItem(Fish.Environment, i);
+            BuildFishList(sEnvironment, FISH_ENVIRONMENT);
+            MergeFishList(Fish.Environment, sEnvironment, FISH_ENVIRONMENT);
+        }
+    }
+
     // Resolve fish inheritance for our environment, equipment, and bait.
-    int nCount = BuildFishList(Fish.Environment, FISH_ENVIRONMENT);
-                 BuildFishList(Fish.Type,        FISH_EQUIPMENT);
-                 BuildFishList(Fish.Bait,        FISH_BAIT);
+    nCount = BuildFishList(Fish.Environment, FISH_ENVIRONMENT);
+             BuildFishList(Fish.Type,        FISH_EQUIPMENT);
+             BuildFishList(Fish.Bait,        FISH_BAIT);
 
     // Only bother calculating this stuff if debug mode is on.
     if (Fish.Debug)
@@ -602,7 +636,7 @@ void ActionFish(string sPrefix)
     // Test for a nibble
     string sFish;
     float  fChance = 1.0;
-    int    i, nFreq, nMod, nChance;
+    int    nFreq, nMod, nChance;
 
     // Loop through the fish in the environment.
     for (i = 0; i < nCount; i++)
@@ -675,7 +709,7 @@ void ActionFish(string sPrefix)
     }
 
     // No fish bit. Run the failure config function.
-    FishDebug("\nNo fish bit! The chance of this happening was " + FloatToString(fChance * 100, 0, 2));
+    FishDebug("\nNo fish bit! The chance of this happening was " + FloatToString(fChance * 100, 0, 2) + "%");
     OnFishNibbleFail();
     PlayFishingAnimation(FISH_EVENT_NO_NIBBLE);
 }
@@ -689,21 +723,24 @@ void FishDebug(string sMessage)
         ActionDoCommand(SendMessageToPC(Fish.PC, sMessage));
 }
 
-void InheritFish(string sChildren, string sParent)
+void InheritFish(string sChildren, string sParents)
 {
-    SetFishString(FISH_INHERITS, sParent, sChildren);
+    SetFishString(FISH_INHERITS, sParents, sChildren);
 }
 
 int GetInheritsFish(string sChild, string sParent)
 {
-    while (sChild != "")
-    {
-        // If the child matches the parent, then we inherit
-        if (sChild == sParent)
-            return TRUE;
+    // Sanity check
+    if (sChild == "" || sParent == "")
+        return FALSE;
 
-        // Test the child's parent, and see if it matches
-        sChild = GetFishString(FISH_INHERITS, sChild);
+    string sTest, sParents = GetLocalString(Fish.Data, sChild + FISH_INHERITS);
+    int i, nCount = GetListCount(sParents);
+    for (i = 0; i < nCount; i++)
+    {
+        sTest = GetListItem(sParents, i);
+        FishDebug("Checking whether " + sTest + " inherits from " + sParent);
+        return (sTest == sParent || GetInheritsFish(sTest, sParent));
     }
 
     // The child has no parents.
@@ -743,7 +780,7 @@ void ExplodeFishList(string sFishList, string sItemList, string sListType, int n
 // "<fish>ENV<environment>"  int          frequency of <fish> in <environment>
 void AddFishEnvironments(string sFishList, string sEnvironmentList, int nFrequency = 0)
 {
-    SendMessageToPC(GetFirstPC(), "Adding " + sFishList + " to " + sEnvironmentList);
+    FishDebug("Adding " + sFishList + " to " + sEnvironmentList);
     ExplodeFishList(sFishList, sEnvironmentList, FISH_ENVIRONMENT, nFrequency);
 }
 
@@ -809,7 +846,7 @@ string GetFishingEnvironment(object oSpot = OBJECT_INVALID)
     if (!GetIsObjectValid(oSpot))
         return Fish.Environment;
 
-    return StringReplace(GetName(oSpot), "Fishing Spot: ", "");
+    return GetName(oSpot);
 }
 
 object GetFishingEquipment()

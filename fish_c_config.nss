@@ -133,7 +133,7 @@ void OnFishingSetup()
 
     // ----- Bait Definitions --------------------------------------------------
 
-    InheritFish("minnow, worm, insect", "live bait");
+    InheritFish("minnow, worm, insect", "live_bait");
 
     AddFishBaits("trout, bass", "live bait");
     AddFishBaits("trout", "insect", 10);
@@ -223,6 +223,7 @@ int OnFishNibbleSuccess(string sFish)
 // stored fishing skill, or even just giving the player some XP.
 int OnFishCatch(string sFish)
 {
+    ActionFloatingTextString("You caught a " + sFish + "!");
     return TRUE;
 }
 
