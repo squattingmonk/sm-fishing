@@ -20,7 +20,7 @@ This system is currently in **alpha status**. While it is usable, it should be c
 
 ### Non-Features
 - Anything that needs to be included in a .hak file. There are no new models for fishing poles, bait, or fish. There are no new sound effects or animations. However, the system can make use of these assets through the config functions if you so choose.
-- Blueprints. The creation of fishing poles, bait, and fish are up to the module builder. The documentation will (eventually) discuss in detail how to do this. I may eventually throw together some example packages for systems of varying complexity.
+- Blueprints. Aside from a few blueprints included for demonstration purposes, the creation of fishing poles, bait, and fish are up to the module builder. The documentation will (eventually) discuss in detail how to do this. I may eventually throw together some example packages for systems of varying complexity.
 
 ## Installation
 ### Dependencies
@@ -33,29 +33,18 @@ Import the following scripts into your module:
 - `fish_t_equipment.nss`
 
 ### Blueprints
-#### Fishing Spots
-1. Create a waypoint blueprint with the tag `fish_fishingspot`.
-2. Set its name to `Fishing Spot: X`, where X is the environment type you wish to create.
-3. Create a blueprint for each environment type you wish to create.
-
-The environment type will be referenced in `fish_c_config.nss`.
-
-#### Fishing Equipment
-1. Create an item blueprint with the tag `fish_t_equipment_X`, where X is the type of equipment to create.
-2. Add the "Cast Spell: OnActivate (Self Only)" item property with unlimited uses.
-2. Create a blueprint for each equipment type you wish to create.
-
-The equipment type will be referenced in `fish_c_config.nss`.
-
-#### Fishing Bait (Optional)
-1. Create an item blueprint with the tag `fish_t_equipment_X`, where X is the type of equipment to create.
-2. Add the "Cast Spell: OnActivate (Self Only)" item property with a single use.
-3. Create a blueprint for each bait type you wish to create.
-
-The bait type will be referenced in `fish_c_config.nss`.
+Blueprint               Required    Function
+---------               --------    --------
+`fish_fishingspot.utw`  yes         Waypoint denoting fishing spots
+`fish_t_pole.uti`       no          Demo fishing pole item
+`fish_t_spear.uti`      no          Demo fishing spear item
+`fish_trout.uti`        no          Demo fish item
+`worm.uti`              no          Demo bait item
 
 ### Fishing Spots
-Place fishing spot waypoints of the appropriate environment type in the water wherever you want the PC to be able to fish. The distance the PC must be from the fishing spot is configurable in `fish_c_config.nss`. You may need multiple fishing spots to ensure full coverage of a given body of water.
+Place fishing spot waypoints in the water wherever you want the PC to be able to fish. To define the type of environment the fishing spot represents, change the name of the waypoint to the name of the environment.
+
+The distance the PC must be from the fishing spot is configurable in `fish_c_config.nss`. You may need multiple fishing spots to ensure full coverage of a given body of water.
 
 ## Configuration
 All configuration is done through the `fish_c_config.nss` file. More in-depth documentation of the configuration file will come soon. For now, use the comments in the script.
@@ -69,7 +58,6 @@ Simply use some fishing equipment near a fishing spot.
 
 ## TODO
 - improve online documentation
-- add basic blueprints for fishing spots, equipment, and bait
 - create .erf for easy import
 - add demo module with in-game explanations
 - create presets for minimal, lite, and full configurations to demonstrate fish customization
