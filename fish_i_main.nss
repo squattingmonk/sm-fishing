@@ -501,7 +501,8 @@ int HandleFishingBait(string sSuccess, string sError)
     // See if we've got a baitable item in our hand.
     object oEquipment = GetItemInSlot(INVENTORY_SLOT_RIGHTHAND, Fish.PC);
 
-    if (GetIsObjectValid(oEquipment) && GetFishingBaitUsage(oEquipment))
+    if (GetIsObjectValid(oEquipment) &&
+        GetFishingBaitUsage(oEquipment) != FISH_BAIT_IS_IGNORED)
     {
         // We can use bait on this item! Set our bait and finish.
         string sBait = GetFishingBaitType(Fish.Item);
