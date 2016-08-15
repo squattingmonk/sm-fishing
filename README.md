@@ -59,8 +59,7 @@ Simply use some fishing equipment near a fishing spot.
 
 ## TODO
 - improve online documentation
-- create .erf for easy import
-- add demo module with in-game explanations
+- update demo module with in-game explanations
 - create presets for minimal, lite, and full configurations to demonstrate fish customization
 - add instructions for all extensions suggested in the documentation
 - test, test, test
