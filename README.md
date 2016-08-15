@@ -28,23 +28,19 @@ This system is currently in **alpha status**. While it is usable, it should be c
 ## Installation
 
 1. Ensure that tag-based scripting is enabled in your module.
-2. Import `sm_fishing.erf` into your module. The package contains the following resources
+2. Import `sm_fishing.erf` into your module. The package contains the following resources:
 
-### Scripts
-Import the following scripts into your module:
-- `fish_c_config.nss`
-- `fish_i_main.nss`
-- `fish_t_equipment.nss`
-
-### Blueprints
-| Blueprint              | Required | Function |
-| ---------              | -------- | -------- |
-| `fish_fishingspot.utw` | yes      | Waypoint denoting a fishing spot |
-| `fish_fishingspot.utt` | yes      | Trigger denoting a fishing spot |
-| `fish_t_pole.uti`      | no       | Demo fishing pole item |
-| `fish_t_spear.uti`     | no       | Demo fishing spear item |
-| `fish_trout.uti`       | no       | Demo fish item |
-| `worm.uti`             | no       | Demo bait item|
+| Resource               | Function                                       |
+| ---------              | ---------                                      |
+| `fish_c_config.nss`    | Configuration script                           |
+| `fish_i_main.nss`      | Main include script                            |
+| `fish_t_equipment.nss` | Tag-based script for fishing equipment         |
+| `fish_fishingspot.utw` | Blueprint for waypoint denoting a fishing spot |
+| `fish_fishingspot.utt` | Blueprint for trigger denoting a fishing spot  |
+| `fish_t_pole.uti`      | Blueprint for demo fishing pole item           |
+| `fish_t_spear.uti`     | Blueprint for demo fishing spear item          |
+| `fish_trout.uti`       | Blueprint for demo fish item                   |
+| `worm.uti`             | Blueprint for demo bait item                   |
 
 ### Fishing Spots
 Place fishing spot waypoints in the water wherever you want the PC to be able to fish. To define the type of environment the fishing spot represents, change the name of the waypoint to the name of the environment.
@@ -53,10 +49,10 @@ The distance the PC must be from the fishing spot is configurable in `fish_c_con
 
 Alternatively, you may paint a fishing spot trigger around the fishable area. Any PC standing inside the trigger will be able to fish there. As with a waypoint fishing spot, change the trigger's name to the environment the fishing spot represents.
 
-## Configuration
+### Configuration
 All configuration is done through the `fish_c_config.nss` file. More in-depth documentation of the configuration file will come soon. For now, use the comments in the script.
 
-### Notes
+#### Note
 - Do *not* edit any files besides `fish_c_config.nss`. Any option that is meant to be altered is located there. Alterations to other files in the system are considered unsupported.
 - Upon editing `fish_c_config.nss`, you *must* recompile `fish_t_equipment.nss` for the changes to be reflected in the game.
 
