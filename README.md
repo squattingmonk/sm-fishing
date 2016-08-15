@@ -22,9 +22,13 @@ This system is currently in **alpha status**. While it is usable, it should be c
 - Anything that needs to be included in a .hak file. There are no new models for fishing poles, bait, or fish. There are no new sound effects or animations. However, the system can make use of these assets through the config functions if you so choose.
 - Blueprints. Aside from a few blueprints included for demonstration purposes, the creation of fishing poles, bait, and fish are up to the module builder. The documentation will (eventually) discuss in detail how to do this. I may eventually throw together some example packages for systems of varying complexity.
 
+## Dependencies
+`util_i_lists.nss` from [sm-utils](https://github.com/squattingmonk/sm-utils)
+
 ## Installation
-### Dependencies
-- `util_i_lists.nss` from [SM Utils](https://github.com/squattingmonk/sm-utils)
+
+1. Ensure that tag-based scripting is enabled in your module.
+2. Import `sm_fishing.erf` into your module. The package contains the following resources
 
 ### Scripts
 Import the following scripts into your module:
@@ -40,12 +44,14 @@ Import the following scripts into your module:
 | `fish_t_pole.uti`      | no       | Demo fishing pole item |
 | `fish_t_spear.uti`     | no       | Demo fishing spear item |
 | `fish_trout.uti`       | no       | Demo fish item |
-| `worm.uti`             | no       | Demo bait item| 
+| `worm.uti`             | no       | Demo bait item|
 
 ### Fishing Spots
 Place fishing spot waypoints in the water wherever you want the PC to be able to fish. To define the type of environment the fishing spot represents, change the name of the waypoint to the name of the environment.
 
 The distance the PC must be from the fishing spot is configurable in `fish_c_config.nss`. You may need multiple fishing spots to ensure full coverage of a given body of water.
+
+Alternatively, you may paint a fishing spot trigger around the fishable area. Any PC standing inside the trigger will be able to fish there. As with a waypoint fishing spot, change the trigger's name to the environment the fishing spot represents.
 
 ## Configuration
 All configuration is done through the `fish_c_config.nss` file. More in-depth documentation of the configuration file will come soon. For now, use the comments in the script.
