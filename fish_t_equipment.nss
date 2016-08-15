@@ -58,7 +58,6 @@ void main()
         return;
 
     // If there is no fishing spot nearby, abort.
-    // TODO: add ability to use a trigger rather than a waypoint
     if (!VerifyFishingSpot(FISH_MAX_DISTANCE))
     {
         FloatingTextStringOnCreature(FISH_TEXT_NO_SPOT, oPC, FALSE);

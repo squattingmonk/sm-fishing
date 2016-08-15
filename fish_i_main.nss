@@ -74,7 +74,7 @@ struct FishingData
 //                              Global Variables
 // -----------------------------------------------------------------------------
 
-// Data structure to hold all variables for this fishing attempt. We instatiate
+// Data structure to hold all variables for this fishing attempt. We instantiate
 // it here so it is accessible to all the functions within this script. All data
 // is set by fish_t_equipment.nss. The user should use the GetFishing*()
 // functions instead of accessing this variable directly.
@@ -109,6 +109,7 @@ int HandleFishingBait(string sSuccess, string sError);
 // ---< VerifyFishingSpot >---
 // ---< fish_i_main >---
 // Returns whether the nearest fishing spot is within fMax meters of the PC.
+// Will also return TRUE if the PC is inside a fishing spot trigger.
 // Note: This is an internal function and should not be used by the builder.
 int VerifyFishingSpot(float fMax);
 
@@ -524,12 +525,24 @@ int HandleFishingBait(string sSuccess, string sError)
 int VerifyFishingSpot(float fMax)
 {
     // Find the nearest fishing spot
-    // TODO: add ability to use a trigger rather than a waypoint
-    Fish.Spot = GetNearestObjectByTag(FISH_WP_FISHING, Fish.PC);
-    Fish.Environment = GetFishingEnvironment(Fish.Spot);
+    int i, bNoMax = fMax <= 0.0;
+    Fish.Spot = GetNearestObjectByTag(FISH_WP_FISHING, Fish.PC, ++i);
 
-    // Make sure it's not too far away.
-    return (GetIsObjectValid(Fish.Spot) && GetDistanceBetween(Fish.PC, Fish.Spot) <= fMax);
+    while (GetIsObjectValid(Fish.Spot))
+    {
+        // Use non-trigger fishing spotss only if there is no max distance or we
+        // are in range of it.
+        if (GetObjectType(Fish.Spot) != OBJECT_TYPE_TRIGGER)
+            return (bNoMax || GetDistanceBetween(Fish.PC, Fish.Spot) <= fMax);
+
+        // Only use a trigger if we are inside of it.
+        if (GetIsInSubArea(Fish.PC, Fish.Spot))
+            return TRUE;
+
+        Fish.Spot = GetNearestObjectByTag(FISH_WP_FISHING, Fish.PC, ++i);
+    }
+
+    return FALSE;
 }
 
 int VerifyFishingBait()
@@ -568,7 +581,6 @@ void MergeFishList(string sTarget, string sSource, string sListType)
     }
 }
 
-// Multiple inheritance version
 int BuildFishList(string sItem, string sListType)
 {
     // Sanity check
@@ -597,6 +609,9 @@ int BuildFishList(string sItem, string sListType)
 
 void ActionFish(string sPrefix)
 {
+    // Set the environment based on the fishing spot
+    Fish.Environment = GetFishingEnvironment(Fish.Spot);
+
     // Run the config function to see if we're allowed to fish.
     if (!OnFishingStart()) return;
 

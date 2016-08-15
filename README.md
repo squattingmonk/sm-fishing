@@ -35,7 +35,8 @@ Import the following scripts into your module:
 ### Blueprints
 | Blueprint              | Required | Function |
 | ---------              | -------- | -------- |
-| `fish_fishingspot.utw` | yes      | Waypoint denoting fishing spots |
+| `fish_fishingspot.utw` | yes      | Waypoint denoting a fishing spot |
+| `fish_fishingspot.utt` | yes      | Trigger denoting a fishing spot |
 | `fish_t_pole.uti`      | no       | Demo fishing pole item |
 | `fish_t_spear.uti`     | no       | Demo fishing spear item |
 | `fish_trout.uti`       | no       | Demo fish item |

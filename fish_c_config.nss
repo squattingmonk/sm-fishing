@@ -30,9 +30,13 @@ Revision Summary:
 // tracking down errors in any of the config functions.
 const int FISH_DEBUG_MODE = TRUE;
 
-// This is the maximum distance, in meters, that a PC may be from a fishing spot
-// to fish using any equipment. You may further refine this distance for various
-// equipment types in the OnFishingStart() config functions below.
+// This is the maximum distance, in meters, that a PC may be from a waypoint
+// fishing spot to fish using any equipment. If this value is 0.0 or less, the
+// PC will be able to fish in any area with a waypoint fishing spot. You may
+// further refine this distance for various equipment types in the
+// OnFishingStart() config functions below.
+// Note: the PC will always be able to fish in a trigger fishing spot if he is
+// inside of it.
 const float FISH_MAX_DISTANCE = 10.0f;
 
 // This prefix is added to any fish name to form the resref for that fish. This
