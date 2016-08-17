@@ -46,28 +46,23 @@ void main()
     // Make sure the fishing system is set up.
     if (InitializeFishingSystem(oPC, oItem, FISH_DEBUG_MODE))
     {
-        // We're running for the first time, so let's apply our bait settings.
-        SetFishInt(FISH_BAIT, FISH_BAIT_IS_REQUIRED, FISH_BAIT_REQUIRED);
-        SetFishInt(FISH_BAIT, FISH_BAIT_IS_OPTIONAL, FISH_BAIT_OPTIONAL);
-        SetFishInt(FISH_BAIT, FISH_BAIT_IS_IGNORED,  FISH_BAIT_IGNORED);
-        SetFishInt(FISH_BAIT, FISH_BAIT_DEFAULT);
+        // We're running for the first time, so set our bait and tackle lists.
+        SetFishString(FISH_BAIT,   FISH_BAIT_ITEMS);
+        SetFishString(FISH_TACKLE, FISH_TACKLE_ITEMS);
     }
 
     // If this is a bait item, let the system handle it and abort.
     if (HandleFishingBait(FISH_TEXT_USE_BAIT, FISH_TEXT_NO_EQUIPMENT))
         return;
 
+    // If this is a tackle item, let the system handle it and abort.
+    if (HandleFishingTackle(FISH_TEXT_USE_TACKLE, FISH_TEXT_NO_EQUIPMENT))
+        return;
+
     // If there is no fishing spot nearby, abort.
     if (!VerifyFishingSpot(FISH_MAX_DISTANCE))
     {
         FloatingTextStringOnCreature(FISH_TEXT_NO_SPOT, oPC, FALSE);
-        return;
-    }
-
-    // If our fishing item requires bait and we have none, abort.
-    if (!VerifyFishingBait())
-    {
-        FloatingTextStringOnCreature(FISH_TEXT_NO_BAIT, oPC, FALSE);
         return;
     }
 

@@ -45,66 +45,37 @@ const float FISH_MAX_DISTANCE = 10.0f;
 const string FISH_ITEM_PREFIX = "fish_";
 
 
-// ----- Equipment Bait Settings -----------------------------------------------
+// ----- Bait and Tackle Lists -------------------------------------------------
 
-// The following settings change how different types of fishing equipment use
-// bait. If the PC uses fishing equipment not in any of these lists, it defaults
-// to ignoring the bait.
+// The following are lists of bait and tackle equipment types. These items
+// cannot be used to fish; they can only be applied to fishing equipment items.
+// Any fishing equipment that is not in these lists can be used to fish.
 //
-// You can add baits to a fish's list using AddFishBaits() in the
-// OnFishingSetup() config function below. This function takes a comma-separated
-// list of fish and and bait, making it easy to add many baits to many fish. The
-// function also allows you to add a modifier to the chances a fish will bite
-// when the PC is using that bait. This allows fish to prefer different baits.
-//
-// You can create your own types of fishing equipment: simply give your item a
-// "Cast Spell: OnActivate (Self Only)" item property with unlimited uses and
-// set its tag to "fish_t_equipment_X", where X is the type of equipment your
-// item is. This will be the value you should use to refer to your equipment
-// type in the settings and config functions below.
-//
-// You can create your own types of bait, too: simply give your item a "Cast
-// Spell: OnActivate (Self Only)" item property with a single use and set its
-// tag to "fish_t_equipment_bait_X", where X is the type of bait your item is.
-// This will be the value you should use to refer to your bait type in the
-// config functions below.
+// You can create your own types of equipment:
+// 1. Give your item a "Cast Spell: OnActivate (Self Only)" item property with
+//    unlimited uses.
+// 2. Set its tag to "fish_t_equipment_*", where * is the type of equipment your
+//    item is. Alternatively, set the tag to "fish_t_equipment" and use the
+//    resref as the eqipment type. This will be the value you should use to
+//    refer to your equipment type in these constants and in the config
+//    functions below.
 
-// This is a comma-separated list of fishing equipment that requires bait to
-// function. If the PC uses one of these items but does not have bait, he will
-// be unable to fish. If he does use bait, he will only be able to catch fish
-// which have the bait in their list. If you don't wish to require the use of
-// bait for any item, set this to "".
-const string FISH_BAIT_REQUIRED = "pole";
 
-// This is a comma-separated list of fishing equipment for which bait is
-// optional. If the PC uses one of these items, he will be able to catch any
-// fish regardless of whether the bait is in its list. However, if he has bait
-// associated with a fish, the nibble check will be modified accordingly.
-const string FISH_BAIT_OPTIONAL = "trap";
+// This is a comma-separated list of equipment to be treated as bait when used.
+const string FISH_BAIT_ITEMS = "bait, worm";
 
-// This is a comma-separated list of fishing equipment for which bait is ignored.
-// If the PC one of these items, he will be unable to use bait on it. He may
-// still use the equipment to catch any fish, regardless of whether the bait is
-// in its list. Since the equipment cannot be baited, it will not have any bait
-// modifiers to the nibble check.
-const string FISH_BAIT_IGNORED = "spear, net";
-
-// This setting is the default handling of bait for items not in the above lists.
-// Possible values:
-// - FISH_BAIT_IS_IGNORED (default)
-// - FISH_BAIT_IS_OPTIONAL
-// - FISH_BAIT_IS_REQUIRED
-const int FISH_BAIT_DEFAULT = FISH_BAIT_IS_IGNORED;
+// This is a comma-separated list of equipment to be treated as tackle when used.
+const string FISH_TACKLE_ITEMS = "hook, float, sinker, line";
 
 
 // ----- Text Strings ----------------------------------------------------------
 
-// This is a list of text strings that may be displayed to the PC by the system
-// functions. If you wish to alter or translate these, you may do so here.
-const string FISH_TEXT_NO_SPOT      = "This doesn't look like a good place to fish.";
-const string FISH_TEXT_NO_BAIT      = "You have no bait! Use a bait item before trying to fish.";
-const string FISH_TEXT_NO_EQUIPMENT = "You can't use bait with your currently equipped item!";
+// This text strings that may be displayed to the PC by the system functions. If
+// you wish to alter or translate these, you may do so here.
 const string FISH_TEXT_USE_BAIT     = "You apply the bait to your equipment.";
+const string FISH_TEXT_USE_TACKLE   = "You apply the tackle to your equipment.";
+const string FISH_TEXT_NO_EQUIPMENT = "You can't use that with your currently equipped item!";
+const string FISH_TEXT_NO_SPOT      = "This doesn't look like a good place to fish.";
 
 
 // -----------------------------------------------------------------------------
@@ -112,7 +83,7 @@ const string FISH_TEXT_USE_BAIT     = "You apply the bait to your equipment.";
 // -----------------------------------------------------------------------------
 
 // If you need to add any additional includes, constants, or functions to extend
-// the config functions below, you may do so here.
+// the config functions below, you may add them here.
 
 
 // -----------------------------------------------------------------------------
@@ -139,13 +110,19 @@ void OnFishingSetup()
 
     InheritFish("minnow, worm, insect", "live_bait");
 
-    AddFishBaits("trout, bass", "live bait");
+    AddFishBaits("trout, bass", "live_bait");
     AddFishBaits("trout", "insect", 10);
     AddFishBaits("bass", "minnow", 10);
 
+    // ----- Tackle Definitions ------------------------------------------------
+
+    InheritFish("hook_large, hook_small", "hook");
+
+    AddFishTackle("trout", "hook_large", -10);
+
     // ----- Equipment Definitions ---------------------------------------------
 
-    InheritFish("cane_pole, willow_rod", "pole");
+    InheritFish("pole_cane, willow_rod", "pole");
 
     AddFishEquipment("trout", "pole");
 
@@ -160,6 +137,57 @@ void OnFishingSetup()
     AddFishingMessage(FISH_EVENT_NIBBLE, "spear", "You spy a $fish!");
 }
 
+// This is a configurable function that runs when the PC uses a fishing bait
+// item and has fishing equipment equipped. Returns whether the bait should be
+// added to the equipped item. Example uses include limiting certain types of
+// bait to certain types of equipment, allowing bait to be used only if the
+// appropriate tackle has been applied, or removing the bait from the player's
+// inventory when used.
+//
+// You can add baits to a fish's list using AddFishBaits() in the
+// OnFishingSetup() config function below. This function takes a comma-separated
+// list of fish and and bait, making it easy to add many baits to many fish. The
+// function also allows you to add a modifier to the chances a fish will bite
+// when the PC is using that bait. This allows fish to prefer different baits.
+//
+// Parameters:
+// - oEquipment: the PC's currently equipped fishing equipment
+// - oBait: the bait item being used
+// Returns: whether to apply the bait to the equipment.
+int OnFishingBaitUsed(object oEquipment, object oBait)
+{
+    // Only allow bait to be used on poles.
+    string sType = GetFishingEquipmentType(oEquipment);
+    if (!GetInheritsFish(sType, "pole"))
+        return FALSE;
+
+    // Bait should be single use.
+    DestroyObject(oBait);
+    return TRUE;
+}
+
+// This is a configurable function that runs when the PC uses a fishing tackle
+// item and has fishing equipment equipped. Returns whether the tackle should be
+// added to the equipped item. Example uses include limiting certain types of
+// tackle to certain types of equipment, preventing multiple types of similar
+// tackle from being added, and removing the tackle from the player's inventory
+// when used.
+// Parameters:
+// - oEquipment: the PC's currently equipped fishing equipment
+// - oTackle: the tackle item being used
+// Returns: whether to apply the tackle to the equipment.
+int OnFishingTackleUsed(object oEquipment, object oTackle)
+{
+    // Only allow tackle to be used on poles.
+    string sType = GetFishingEquipmentType(oEquipment);
+    if (!GetInheritsFish(sType, "pole"))
+        return FALSE;
+
+    // Tackle should be single use.
+    DestroyObject(oTackle);
+    return TRUE;
+}
+
 // This is a configurable function that runs when the PC uses fishing equipment.
 // Returns whether the PC is able to fish. Example uses include setting a max
 // distance to the fishing spot based on his equipment, providing flavor text
@@ -172,14 +200,22 @@ int OnFishingStart()
     // his choice of equipment: fishing pole = 10m, all others = 3m.
     object oSpot = GetFishingSpot();
     string sType = GetFishingEquipmentType();
+    int bIsPole  = GetInheritsFish(sType, "pole");
 
-    if (!GetInheritsFish(sType, "pole") && GetDistanceBetween(OBJECT_SELF, oSpot) > 3.0f)
+    if (!bIsPole && GetDistanceBetween(OBJECT_SELF, oSpot) > 3.0f)
     {
         ActionFloatingTextString(FISH_TEXT_NO_SPOT);
         return FALSE;
     }
 
-    string sMessage = GetFishingMessage(FISH_EVENT_NIBBLE, GetFishingEquipmentType());
+    // If the PC doesn't have any bait on his fishing pole, abort.
+    if (bIsPole && GetFishingBait() == "")
+    {
+        ActionFloatingTextString("You have no bait!");
+        return FALSE;
+    }
+
+    string sMessage = GetFishingMessage(FISH_EVENT_START, GetFishingEquipmentType());
     ActionFloatingTextString(sMessage);
 
     return TRUE;
