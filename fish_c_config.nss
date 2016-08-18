@@ -4,11 +4,9 @@ System:          SM's Fishing System (configuration script)
 Author:          Michael A. Sinclair (Squatting Monk) <squattingmonk@gmail.com>
 Date Created:    Aug. 2, 2015
 Summary:
-Fishing System configuration settings. This script contains user-definable
-toggles and settings for the Fishing System.
-
-This script is freely editable by the mod builder. All below constants may be
-overridden, but do not alter the names of the constants or functions.
+Fishing System configuration settings. This script is freely editable by the mod
+builder. All below settings may be overridden, but do not alter the names of the
+constants or functions.
 
 This script is consumed by fish_t_equipment as an include directive.
 
@@ -44,7 +42,6 @@ const float FISH_MAX_DISTANCE = 10.0f;
 // config functions below readable.
 const string FISH_ITEM_PREFIX = "fish_";
 
-
 // ----- Bait and Tackle Lists -------------------------------------------------
 
 // The following are lists of bait and tackle equipment types. These items
@@ -66,7 +63,6 @@ const string FISH_BAIT_ITEMS = "bait, worm";
 
 // This is a comma-separated list of equipment to be treated as tackle when used.
 const string FISH_TACKLE_ITEMS = "hook, float, sinker, line";
-
 
 // ----- Text Strings ----------------------------------------------------------
 
@@ -95,8 +91,8 @@ const string FISH_TEXT_NO_SPOT      = "This doesn't look like a good place to fi
 // of the functions, but do not change the function names.
 
 // This is a configurable function you can use to alter the fish, environments,
-// and baits used in your module. All of the following code will run the first
-// time a fishing item is used in your module.
+// baits, and tackle used in your module. All of the following code will run the
+// first time a fishing item is used in your module.
 void OnFishingSetup()
 {
     // ----- Environment Definitions -------------------------------------------
@@ -172,6 +168,14 @@ int OnFishingBaitUsed(object oEquipment, object oBait)
 // tackle to certain types of equipment, preventing multiple types of similar
 // tackle from being added, and removing the tackle from the player's inventory
 // when used.
+//
+// You can add tackle to a fish's list using AddFishTacle() in the
+// OnFishingSetup() config function below. This function takes a comma-separated
+// list of fish and and tackle, making it easy to add many tackle types to many
+// fish. The function also allows you to add a modifier to the chances a fish
+// will bite when the PC is using that tackle. This allows fish to prefer
+// different tackle.
+//
 // Parameters:
 // - oEquipment: the PC's currently equipped fishing equipment
 // - oTackle: the tackle item being used

@@ -1,6 +1,6 @@
 /*
 Filename:        fish_t_equipment.nss
-System:          SM's Fishing System (library script)
+System:          SM's Fishing System (tag-based script)
 Author:          Michael A. Sinclair (Squatting Monk) <squattingmonk@gmail.com>
 Date Created:    Aug. 9, 2015
 Summary:
@@ -8,21 +8,15 @@ This script handles the OnActivate event for all fishing equipment. Activating
 the item will set up the fishing system automagically. You should not edit this
 file. All configurable settings are found in fish_c_config.
 
-If the item is bait, it will apply the bait to any baitable item the player has
-in his hand. Otherwise, it will search for the nearest fishing spot. If one is
-found within range, this will begin the fishing sequence.
+If the item is bait or tackle, it will be applied to any fishing equipment the
+player has his hand. Otherwise, it will search for the nearest fishing spot. If
+one is found within range, this will begin the fishing sequence.
 
 You can create your own types of fishing equipment: simply give your item a
 "Cast Spell: OnActivate (Self Only)" item property with unlimited uses and set
 its tag to "fish_t_equipment_X", where X is the type of equipment your item is.
 This will be the value you should use to refer to your equipment type in the
 settings and config functions in fish_c_config.
-
-You can create your own types of bait, too: simply give your item a "Cast Spell:
-OnActivate (Self Only)" item property with a single use and set its tag to
-"fish_t_equipment_bait_X", where X is the type of bait your item is. This will
-be the value you should use to refer to your bait type in the settings and
-config functions in fish_c_config.
 
 Revision Info should only be included for post-release revisions.
 -----------------

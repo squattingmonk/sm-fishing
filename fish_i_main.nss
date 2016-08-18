@@ -436,6 +436,14 @@ int OnFishingBaitUsed(object oEquipment, object oBait);
 // tackle to certain types of equipment, preventing multiple types of similar
 // tackle from being added, and removing the tackle from the player's inventory
 // when used.
+//
+// You can add tackle to a fish's list using AddFishTacle() in the
+// OnFishingSetup() config function below. This function takes a comma-separated
+// list of fish and and tackle, making it easy to add many tackle types to many
+// fish. The function also allows you to add a modifier to the chances a fish
+// will bite when the PC is using that tackle. This allows fish to prefer
+// different tackle.
+//
 // Parameters:
 // - oEquipment: the PC's currently equipped fishing equipment
 // - oTackle: the tackle item being used
