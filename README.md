@@ -40,6 +40,8 @@ This system is currently in **alpha status**. While it is usable, it should be c
 | `fish_t_pole.uti`      | Blueprint for demo fishing pole item           |
 | `fish_t_spear.uti`     | Blueprint for demo fishing spear item          |
 | `fish_trout.uti`       | Blueprint for demo fish item                   |
+| `hook.uti`             | Blueprint for demo tackle item                 |
+| `trout.uti`            | Blueprint for demo fish item                   |
 | `worm.uti`             | Blueprint for demo bait item                   |
 
 ### Fishing Spots
