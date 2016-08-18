@@ -764,7 +764,7 @@ void ActionFish(string sPrefix)
         for (n = 0; n < nTackle; n++)
         {
             sTackle = GetListItem(Fish.Tackle, n);
-            nMod != GetFishInt(FISH_TACKLE + sTackle, sFish);
+            nMod += GetFishInt(FISH_TACKLE + sTackle, sFish);
         }
 
         // Get the frequency the fish bites and allow the user to modify it.
