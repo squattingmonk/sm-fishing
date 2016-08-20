@@ -26,7 +26,7 @@ Revision Summary:
 
 // If this is true, fishing will generate debug calls. This may be useful for
 // tracking down errors in any of the config functions.
-const int FISH_DEBUG_MODE = TRUE;
+const int FISH_DEBUG_MODE = FALSE;
 
 // This is the maximum distance, in meters, that a PC may be from a waypoint
 // fishing spot to fish using any equipment. If this value is 0.0 or less, the

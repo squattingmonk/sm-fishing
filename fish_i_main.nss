@@ -159,9 +159,7 @@ void FishDebug(string sMessage);
 // ---< fish_i_main >---
 // Sets every item in the CSV list sChildList as inheriting fish from the list
 // of every item in the CSV list sParentList. You can chain inheritance (i.e.,
-// "Murkwater Lake" inherits from "lake" which inherits from "freshwater"), but
-// ensure that no two items inherit from each other, even indirectly, or the
-// system will loop infinitely when climbing the inheritance tree.
+// "Murkwater Lake" inherits from "lake" which inherits from "freshwater").
 //
 // The parent and children can be environments, baits, tackle, or equipment, but
 // do not let different types inherit from each other (e.g., a bait inherit from
@@ -709,8 +707,16 @@ int BuildFishList(string sItem, string sListType)
     int i, nCount = GetStringListCount(Fish.Data, FISH_PARENT + sItem);
     for (i = 0; i < nCount; i++)
     {
-        // The parent must be resolved before we can merge it into the child.
         sParent = GetStringListItem(Fish.Data, i, FISH_PARENT + sItem);
+
+        // If the relation between parent and child has been established, skip
+        // this parent. This will prevent us from looping infinitely if two
+        // items inherit from each other.
+        if (sListType == FISH_PARENT &&
+            GetLocalInt(Fish.Data, sParent + FISH_PARENT + sItem))
+            continue;
+
+        // The parent must be resolved before we can merge it into the child.
         FishDebug("Building " + sListType + " list for " + sParent);
         BuildFishList(sParent, sListType);
         MergeFishList(sItem, sParent, sListType);
