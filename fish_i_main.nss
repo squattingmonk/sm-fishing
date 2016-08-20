@@ -35,24 +35,22 @@ const string FISH_BAIT        = "BAIT";
 const string FISH_DEBUG       = "DEBUG";
 const string FISH_ENVIRONMENT = "ENV";
 const string FISH_EQUIPMENT   = "EQU";
-const string FISH_INHERITS    = "INHERITS";
 const string FISH_MESSAGE     = "MSG";
 const string FISH_NAME        = "NAME";
+const string FISH_PARENT      = "PARENT";
 const string FISH_RESREF      = "RESREF";
 const string FISH_TACKLE      = "TACKLE";
 const string FISH_TAG         = "TAG";
 
-// Fishing bait preferences for equipment
-const int FISH_BAIT_IS_REQUIRED = 1;
-const int FISH_BAIT_IS_OPTIONAL = 2;
-const int FISH_BAIT_IS_IGNORED  = 3;
-
 // Fishing events for animation
-const int FISH_EVENT_START     = 0;
-const int FISH_EVENT_NIBBLE    = 1;
-const int FISH_EVENT_CATCH     = 2;
-const int FISH_EVENT_NO_CATCH  = 3;
-const int FISH_EVENT_NO_NIBBLE = 4;
+const int FISH_EVENT_START       = 0;
+const int FISH_EVENT_NIBBLE      = 1;
+const int FISH_EVENT_CATCH       = 2;
+const int FISH_EVENT_NO_CATCH    = 3;
+const int FISH_EVENT_NO_NIBBLE   = 4;
+const int FISH_EVENT_LOST_ITEM   = 5;
+const int FISH_EVENT_LOST_BAIT   = 6;
+const int FISH_EVENT_LOST_TACKLE = 7;
 
 struct FishingData
 {
@@ -154,15 +152,15 @@ void ActionFish(string sPrefix);
 // queue, so the PC will see the message at the appropriate time.
 void FishDebug(string sMessage);
 
-// ---< InheritFish >---
+// ---< AddFish >---
 // ---< fish_i_main >---
-// Sets every item in the CSV list sChildren as inheriting fish from the list of
-// every item in the CSV list sParents. You can chain inheritance (i.e.,
+// Sets every item in the CSV list sChildList as inheriting fish from the list
+// of every item in the CSV list sParentList. You can chain inheritance (i.e.,
 // "Murkwater Lake" inherits from "lake" which inherits from "freshwater"), but
 // ensure that no two items inherit from each other, even indirectly, or the
 // system will loop infinitely when climbing the inheritance tree.
 //
-// The parent and children can be environments, baits, or equipment types, but
+// The parent and children can be environments, baits, tackle, or equipment, but
 // do not let different types inherit from each other (e.g., a bait inherit from
 // an environment) or Bad Things Will Happen (TM).
 //
@@ -175,32 +173,26 @@ void FishDebug(string sMessage);
 // making fish more or less likely to be caught.
 //
 // Example usage for environments:
-// InheritFish("lake, pond, river", "freshwater");
-// InheritFish("Murkwater Lake", "lake");
+// AddFish("freshwater", "lake, pond, river");
+// AddFish("lake", "Murkwater Lake");
 // In this case, every fish found in "freshwater" can also be found in "lake",
 // "pond", and "river"; every fish found in "freshwater" or "lake" can also be
 // found in "Murkwater Lake".
 //
 // Example usage for baits:
-// InheritFish("insect, worm, minnow", "live_bait");
-// InheritFish("mayfly, beetle", "insect");
+// AddFish("live_bait", "insect, worm, minnow");
+// AddFish("insect", "mayfly, beetle");
 // In this case, every fish that eats "live_bait" will also eat "insect", "worm"
 // and "minnow"; every fish that eats in "insect" or "live bait" will also eat
 // "mayfly" and "beetle".
 //
 // Example usage for equipment:
-// InheritFish("pole_light, pole_standard, pole_heavy", "pole");
-// InheritFish("pole_cane, pole_willow", "pole_light");
+// AddFish("pole", "pole_light, pole_standard, pole_heavy");
+// AddFish("pole_light", "pole_cane, pole_willow");
 // In this case, every fish that can be caught with a "pole" can also be caught
 // with a "pole_light"; every fish that can be caught with a "pole" or
 // "pole_light" can also be caught with a "pole_cane" or "pole_willow".
-void InheritFish(string sChildren, string sParents);
-
-// ---< GetInheritsFish >---
-// ---< fish_i_main >---
-// Returns whether sChild (an environment, bait, or equipment type) inherits
-// fish from sParent, however remotely.
-int GetInheritsFish(string sChild, string sParent);
+void AddFish(string sParentList, string sChildList);
 
 // ---< AddFishEnvironments >---
 // ---< fish_i_main >---
@@ -238,10 +230,55 @@ void AddFishEquipment(string sFishList, string sEquipmentList, int nModifier = 0
 
 // ---< AddFishTackle >---
 // ---< fish_i_main >---
-// Modifies the chance of catching any fish in sFishList byt nModifier whenever
+// Modifies the chance of catching any fish in sFishList by nModifier whenever
 // fishing with any tackle in sTackleList. The tackle is not required for the
 // fish to be caught.
 void AddFishTackle(string sFishList, string sTackleList, int nModifier = 0);
+
+// ---< AddFishMessage >---
+// ---< fish_i_main >---
+// Adds to a list of messages that may be displayed to the player during nEvent.
+// Parameters:
+// - nEvent: a FISH_EVENT_* constant matching when the message will be sent. You
+//   can also use your own event numbers, as long as they are > 7.
+// - sKeyList: a comma-separated list of keys to identify the proper message to
+//   send.
+//   - For the START, NIBBLE, CATCH, NO_NIBBLE, and NO_CATCH events, the key
+//     should be an equipment type. Other events are up to the builder to
+//     implement, and so may be keyed how you wish.
+//   - Keys will inherit from parent types, so if "pole_cane" has been defined
+//     as inheriting from "pole", messages defined for "pole" can be displayed
+//     when the PC uses "pole_cane".
+// - sMessage: the message to display to the PC.
+// Example usage:
+// AddFishMessage(FISH_EVENT_START, "pole", "You cast your line. Now to wait.");
+// AddFishMessage(FISH_EVENT_START, "spear, net", "You wait, eyes intent on the water.");
+// AddFishMessage(FISH_EVENT_NIBBLE, "pole", "Something took your bait!");
+void AddFishMessage(int nEvent, string sKeyList, string sMessage);
+
+// ---< GetFishMessage >---
+// ---< fish_i_main >---
+// Returns a random message to be displayed to the player during nEvent. You can
+// add messages to display using AddFishMessage().
+// Parameters:
+// - nEvent: a FISH_EVENT_* constant matching when the message will be sent. You
+//   can also use your own event numbers, as long as they are > 7.
+// - sKey: a key to identify the proper message to return.
+//   - For the START, NIBBLE, CATCH, NO_NIBBLE, and NO_CATCH events, the key
+//     should be an equipment type. Other events are up to the builder to
+//     implement, and so may be keyed how you wish.
+//   - Keys will inherit from parent types, so if "pole_cane" has been defined
+//     as inheriting from "pole", messages defined for "pole" can be displayed
+//     when the PC uses "pole_cane".
+// Example usage:
+// GetFishMessage(FISH_EVENT_START, "pole");
+string GetFishMessage(int nEvent, string sKey);
+
+// ---< GetInheritsFish >---
+// ---< fish_i_main >---
+// Returns whether sChild (an environment, bait, tackle, or equipment type)
+// inherits fish from sParent, however remotely.
+int GetInheritsFish(string sChild, string sParent);
 
 // ---< IsFishingBaitType >---
 // ---< fish_i_main >---
@@ -627,6 +664,7 @@ void MergeFishList(string sTarget, string sSource, string sListType)
 {
     FishDebug("Merging " + sSource + "'s " + sListType + " list into " + sTarget + "'s list");
     int i, nFreq, nCount = GetStringListCount(Fish.Data, sListType + sSource);
+    int bNotMessage = (FindSubString(sListType, FISH_MESSAGE) == -1);
     string sFish;
 
     for (i = 0; i < nCount; i++)
@@ -640,12 +678,15 @@ void MergeFishList(string sTarget, string sSource, string sListType)
         {
             FishDebug("Adding " + sTarget + " to " + sFish + "'s " + sListType + " list.");
 
-            // We need to add the item to the fish's list.
-            AddStringListItem(Fish.Data, sTarget, sFish + sListType);
+            if (bNotMessage)
+            {
+                // We need to add the item to the fish's list.
+                AddStringListItem(Fish.Data, sTarget, sFish + sListType);
 
-            // Set the frequency or modifier.
-            nFreq = GetLocalInt(Fish.Data, sFish + sListType + sSource);
-                    SetLocalInt(Fish.Data, sFish + sListType + sTarget, nFreq);
+                // Set the frequency or modifier.
+                nFreq = GetLocalInt(Fish.Data, sFish + sListType + sSource);
+                        SetLocalInt(Fish.Data, sFish + sListType + sTarget, nFreq);
+            }
         }
     }
 }
@@ -660,12 +701,12 @@ int BuildFishList(string sItem, string sListType)
         return GetStringListCount(Fish.Data, sListType + sItem);
 
     // It hasn't. Let's check any parents it has and merge them into the list.
-    string sParent, sParents = GetLocalString(Fish.Data, sItem + FISH_INHERITS);
-    int i, nCount = GetListCount(sParents);
+    string sParent;
+    int i, nCount = GetStringListCount(Fish.Data, FISH_PARENT + sItem);
     for (i = 0; i < nCount; i++)
     {
         // The parent must be resolved before we can merge it into the child.
-        sParent = GetListItem(sParents, i);
+        sParent = GetStringListItem(Fish.Data, i, FISH_PARENT + sItem);
         FishDebug("Building " + sListType + " list for " + sParent);
         BuildFishList(sParent, sListType);
         MergeFishList(sItem, sParent, sListType);
@@ -688,20 +729,23 @@ void ActionFish(string sPrefix)
     // Run the config function to see if we're allowed to fish.
     if (!OnFishingStart()) return;
 
-    // If this is a comma-separated environment that has not yet been built, set
-    // its parents as the component environments that make up the list.
-    int nCount = GetListCount(Fish.Environment);
-    if (nCount > 1 && !GetLocalInt(Fish.Data, Fish.Environment))
-        SetLocalString(Fish.Data, Fish.Environment + FISH_INHERITS, Fish.Environment);
+    // If this is a combined environment that has not yet been built, set its
+    // component environments as its parents.
+    if (!GetLocalInt(Fish.Data, Fish.Environment))
+    {
+        string sParents = StringReplace(Fish.Environment, "+", ",");
+        if (GetListCount(sParents) > 1)
+            AddFish(sParents, Fish.Environment);
+    }
 
     // Resolve fish inheritance for our environment, equipment, and bait.
-    nCount = BuildFishList(Fish.Environment, FISH_ENVIRONMENT);
-             BuildFishList(Fish.Type,        FISH_EQUIPMENT);
-             BuildFishList(Fish.Bait,        FISH_BAIT);
+    int nCount = BuildFishList(Fish.Environment, FISH_ENVIRONMENT);
+                 BuildFishList(Fish.Type,        FISH_EQUIPMENT);
+                 BuildFishList(Fish.Bait,        FISH_BAIT);
 
     // Build the fish list for all of our tackle
     int n, nTackle = GetListCount(Fish.Tackle);
-    for (n = 0; n < nCount; n++)
+    for (n = 0; n < nTackle; n++)
         BuildFishList(GetListItem(Fish.Tackle, n), FISH_TACKLE);
 
     // Only spend time compiling these lists if debug mode is on
@@ -726,10 +770,15 @@ void ActionFish(string sPrefix)
     for (i = 0; i < nCount; i++)
     {
         sFish = GetStringListItem(Fish.Data, (nStart + i) % nCount, FISH_ENVIRONMENT + Fish.Environment);
+        nMod = 0;
 
-        FishDebug("\nTrying to catch a " + sFish);
-        FishDebug("Equipment list: " + CompressList(Fish.Data, sFish + FISH_EQUIPMENT));
-        FishDebug("Bait list: " + CompressList(Fish.Data, sFish + FISH_BAIT));
+        // Only spend time compiling these lists if debug mode is on
+        if (Fish.Debug)
+        {
+            FishDebug("\nTrying to catch a " + sFish);
+            FishDebug("Equipment list: " + CompressList(Fish.Data, sFish + FISH_EQUIPMENT));
+            FishDebug("Bait list: " + CompressList(Fish.Data, sFish + FISH_BAIT));
+        }
 
         // If this fish has a set list of items that can catch it...
         if (GetStringListCount(Fish.Data, sFish + FISH_EQUIPMENT))
@@ -742,7 +791,8 @@ void ActionFish(string sPrefix)
             }
 
             // Otherwise, get the modifier for this equipment.
-            nMod = GetFishInt(FISH_EQUIPMENT + Fish.Type, sFish);
+            nMod += GetFishInt(FISH_EQUIPMENT + Fish.Type, sFish);
+            FishDebug("Equipment mod: " + IntToString(nMod));
         }
 
         // If this fishing equipment has bait, is it the bait we need?
@@ -758,6 +808,7 @@ void ActionFish(string sPrefix)
 
             // We can use this bait!
             nMod += GetFishInt(FISH_BAIT + Fish.Bait, sFish);
+            FishDebug("Bait mod: " + IntToString(nMod));
         }
 
         // If we have fishing tackle, get all the modifiers from it.
@@ -765,6 +816,7 @@ void ActionFish(string sPrefix)
         {
             sTackle = GetListItem(Fish.Tackle, n);
             nMod += GetFishInt(FISH_TACKLE + sTackle, sFish);
+            FishDebug("Tackle mod: " + IntToString(nMod));
         }
 
         // Get the frequency the fish bites and allow the user to modify it.
@@ -814,33 +866,6 @@ void FishDebug(string sMessage)
         ActionDoCommand(SendMessageToPC(Fish.PC, sMessage));
 }
 
-void InheritFish(string sChildren, string sParents)
-{
-    SetFishString(FISH_INHERITS, sParents, sChildren);
-}
-
-int GetInheritsFish(string sChild, string sParent)
-{
-    // Sanity check
-    if (sChild == "" || sParent == "")
-        return FALSE;
-
-    if (sChild == sParent)
-        return TRUE;
-
-    string sTest, sParents = GetLocalString(Fish.Data, sChild + FISH_INHERITS);
-    int i, nCount = GetListCount(sParents);
-    for (i = 0; i < nCount; i++)
-    {
-        sTest = GetListItem(sParents, i);
-        FishDebug("Checking whether " + sTest + " inherits from " + sParent);
-        return (sTest == sParent || GetInheritsFish(sTest, sParent));
-    }
-
-    // The child has no parents.
-    return FALSE;
-}
-
 // Private function called by AddFish*() functions to populate fish lists.
 void ExplodeFishList(string sFishList, string sItemList, string sListType, int nValue)
 {
@@ -865,6 +890,16 @@ void ExplodeFishList(string sFishList, string sItemList, string sListType, int n
             SetLocalInt(Fish.Data, sFish + sListType + sItem, nValue);
         }
     }
+}
+
+// Sets the following each run
+// Name                    Type         Purpose
+// "PARENT<child>"         string list  all parent types inherited by <child>
+// "<parent>PARENT"        string list  all child types that inherit from <parent>
+// "<parent>PARENT<child>" int          whether <child> inherits from <parent>
+void AddFish(string sParentList, string sChildList)
+{
+    ExplodeFishList(sParentList, sChildList, FISH_PARENT, TRUE);
 }
 
 // Sets the following each run:
@@ -908,12 +943,16 @@ void AddFishTackle(string sFishList, string sTackleList, int nModifier = 0)
     ExplodeFishList(sFishList, sTackleList, FISH_TACKLE, nModifier);
 }
 
-void AddFishingMessage(int nEvent, string sKeyList, string sMessage)
+// Sets the following each run
+// Name               Type         Purpose
+// "<event>MSG<key>"  string list  messages for <key> during <event>
+void AddFishMessage(int nEvent, string sKeyList, string sMessage)
 {
-    if (sMessage == "")
+    // Sanity check
+    if (sKeyList == "" || sMessage == "")
         return;
 
-    string sKey, sName = FISH_MESSAGE + IntToString(nEvent);
+    string sKey, sName = IntToString(nEvent) + FISH_MESSAGE;
     int i, nCount = GetListCount(sKeyList);
     for (i = 0; i < nCount; i++)
     {
@@ -922,22 +961,27 @@ void AddFishingMessage(int nEvent, string sKeyList, string sMessage)
     }
 }
 
-string GetFishingMessage(int nEvent, string sKey)
+string GetFishMessage(int nEvent, string sKey)
 {
-    string sName = FISH_MESSAGE + IntToString(nEvent);
-    int nCount = GetStringListCount(Fish.Data, sName + sKey);
+    // Sanity check
+    if (sKey == "")
+        return "";
 
-    // If we don't have any messages for this key, see if we inherited any.
-    while (!nCount)
-    {
-        sKey = GetLocalString(Fish.Data, sKey + FISH_INHERITS);
-        if (sKey == "") return "";
-
-        nCount = GetStringListCount(Fish.Data, sName + sKey);
-    }
-
-    // Get a random message from the list.
+    string sName = IntToString(nEvent) + FISH_MESSAGE;
+    int nCount = BuildFishList(sKey, sName);
     return GetStringListItem(Fish.Data, Random(nCount), sName + sKey);
+}
+
+int GetInheritsFish(string sChild, string sParent)
+{
+    // Sanity check
+    if (sChild == "" || sParent == "")
+        return FALSE;
+
+    if (sChild == sParent)
+        return TRUE;
+
+    return GetLocalInt(Fish.Data, sParent + FISH_PARENT + sChild);
 }
 
 int IsFishingBaitType(string sType)

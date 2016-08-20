@@ -62,7 +62,7 @@ const string FISH_ITEM_PREFIX = "fish_";
 const string FISH_BAIT_ITEMS = "bait, worm";
 
 // This is a comma-separated list of equipment to be treated as tackle when used.
-const string FISH_TACKLE_ITEMS = "hook, float, sinker, line";
+const string FISH_TACKLE_ITEMS = "hook, float, sinker, line, hook_large";
 
 // ----- Text Strings ----------------------------------------------------------
 
@@ -97,40 +97,40 @@ void OnFishingSetup()
 {
     // ----- Environment Definitions -------------------------------------------
 
-    InheritFish("lake, river, pond", "freshwater");
+    AddFish("freshwater", "lake, pond, river");
 
     AddFishEnvironments("trout, bass", "freshwater", 20);
     AddFishEnvironments("trout", "pond, river", 30);
 
     // ----- Bait Definitions --------------------------------------------------
 
-    InheritFish("minnow, worm, insect", "live_bait");
+    AddFish("live_bait", "insect, worm, minnow");
 
     AddFishBaits("trout, bass", "live_bait");
-    AddFishBaits("trout", "insect", 10);
+    AddFishBaits("trout", "worm", 10);
     AddFishBaits("bass", "minnow", 10);
 
     // ----- Tackle Definitions ------------------------------------------------
 
-    InheritFish("hook_large, hook_small", "hook");
+    AddFish("hook", "hook_large");
 
     AddFishTackle("trout", "hook_large", -10);
 
     // ----- Equipment Definitions ---------------------------------------------
 
-    InheritFish("pole_cane, willow_rod", "pole");
+    AddFish("pole", "pole_light, pole_standard, pole_heavy");
 
     AddFishEquipment("trout", "pole");
 
     // ----- Event Messages-----------------------------------------------------
 
-    AddFishingMessage(FISH_EVENT_START,  "pole", "You cast your line. Now to wait...");
-    AddFishingMessage(FISH_EVENT_NIBBLE, "pole", "You feel a tug on your line!");
-    AddFishingMessage(FISH_EVENT_NIBBLE, "pole", "Something took your bait!");
+    AddFishMessage(FISH_EVENT_START, "pole", "You cast your line. Now to wait...");
+    AddFishMessage(FISH_EVENT_NIBBLE, "pole", "You feel a tug on your line!");
+    AddFishMessage(FISH_EVENT_NIBBLE, "pole", "Something took your bait!");
 
-    AddFishingMessage(FISH_EVENT_START,  "spear", "You ready your spear, eyes intent on the water...");
-    AddFishingMessage(FISH_EVENT_NIBBLE, "spear", "There's a fish!");
-    AddFishingMessage(FISH_EVENT_NIBBLE, "spear", "You spy a $fish!");
+    AddFishMessage(FISH_EVENT_START, "spear", "You ready your spear, eyes intent on the water...");
+    AddFishMessage(FISH_EVENT_NIBBLE, "spear", "There's a fish!");
+    AddFishMessage(FISH_EVENT_NIBBLE, "spear", "You spy a fish!");
 }
 
 // This is a configurable function that runs when the PC uses a fishing bait
@@ -219,7 +219,7 @@ int OnFishingStart()
         return FALSE;
     }
 
-    string sMessage = GetFishingMessage(FISH_EVENT_START, GetFishingEquipmentType());
+    string sMessage = GetFishMessage(FISH_EVENT_START, GetFishingEquipmentType());
     ActionFloatingTextString(sMessage);
 
     return TRUE;
@@ -235,6 +235,8 @@ int OnFishingStart()
 // Returns: an amount to add to the chance the fish will bite.
 int OnFishNibble(string sFish)
 {
+    string sMessage = GetFishMessage(FISH_EVENT_NIBBLE, GetFishingEquipmentType());
+    ActionFloatingTextString(sMessage);
     return 0;
 }
 
