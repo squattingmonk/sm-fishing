@@ -48,9 +48,6 @@ const int FISH_EVENT_NIBBLE      = 1;
 const int FISH_EVENT_CATCH       = 2;
 const int FISH_EVENT_NO_CATCH    = 3;
 const int FISH_EVENT_NO_NIBBLE   = 4;
-const int FISH_EVENT_LOST_ITEM   = 5;
-const int FISH_EVENT_LOST_BAIT   = 6;
-const int FISH_EVENT_LOST_TACKLE = 7;
 
 struct FishingData
 {
@@ -132,6 +129,12 @@ void MergeFishList(string sTarget, string sSource, string sListType);
 // frequency or modifiers. Returns the count of the newly added fish list.
 // Note: This is an internal function and should not be used by the builder.
 int BuildFishList(string sItem, string sListType);
+
+// ---< ActionFishEvent >---
+// ---< fish_i_main >---
+// Sends the appropiate message to the PC based on his equipment type, then runs
+// the config function PlayFishingAnimation() for the appropriate event.
+void ActionFishEvent(int nEvent);
 
 // ---< ActionFish >---
 // ---< fish_i_main >---
@@ -240,7 +243,7 @@ void AddFishTackle(string sFishList, string sTackleList, int nModifier = 0);
 // Adds to a list of messages that may be displayed to the player during nEvent.
 // Parameters:
 // - nEvent: a FISH_EVENT_* constant matching when the message will be sent. You
-//   can also use your own event numbers, as long as they are > 7.
+//   can also use your own event numbers, as long as they are > 5.
 // - sKeyList: a comma-separated list of keys to identify the proper message to
 //   send.
 //   - For the START, NIBBLE, CATCH, NO_NIBBLE, and NO_CATCH events, the key
@@ -262,7 +265,7 @@ void AddFishMessage(int nEvent, string sKeyList, string sMessage);
 // add messages to display using AddFishMessage().
 // Parameters:
 // - nEvent: a FISH_EVENT_* constant matching when the message will be sent. You
-//   can also use your own event numbers, as long as they are > 7.
+//   can also use your own event numbers, as long as they are > 5.
 // - sKey: a key to identify the proper message to return.
 //   - For the START, NIBBLE, CATCH, NO_NIBBLE, and NO_CATCH events, the key
 //     should be an equipment type. Other events are up to the builder to
@@ -516,7 +519,8 @@ int OnFishNibble(string sFish);
 // his failure, adding a chance of losing his bait, or having him catch seaweed
 // or an old boot instead.
 // - OBJECT_SELF: the PC who failed to catch a fish.
-void OnFishNibbleFail();
+// Returns: whether to display the failure animation and message.
+int OnFishNibbleFail();
 
 // ---< OnFishNibbleSuccess >---
 // ---< fish_c_config >---
@@ -717,6 +721,12 @@ int BuildFishList(string sItem, string sListType)
     return GetStringListCount(Fish.Data, sListType + sItem);
 }
 
+void ActionFishEvent(int nEvent)
+{
+    ActionFloatingTextString(GetFishMessage(nEvent, Fish.Type));
+    PlayFishingAnimation(nEvent);
+}
+
 void ActionFish(string sPrefix)
 {
     // Set the environment based on the fishing spot
@@ -757,6 +767,10 @@ void ActionFish(string sPrefix)
         FishDebug("Fish catchable with this equipment: " + GetFishByEquipment(Fish.Type));
     }
 
+    // Face the fishing spot.
+    SetFacingPoint(GetPosition(GetFishingSpot()));
+    ActionFishEvent(FISH_EVENT_START);
+
     // To keep fish earlier in the list from dominating, let's pick a random
     // index and start iterating from there.
     int nStart = Random(nCount);
@@ -792,7 +806,6 @@ void ActionFish(string sPrefix)
 
             // Otherwise, get the modifier for this equipment.
             nMod += GetFishInt(FISH_EQUIPMENT + Fish.Type, sFish);
-            FishDebug("Equipment mod: " + IntToString(nMod));
         }
 
         // If this fishing equipment has bait, is it the bait we need?
@@ -808,7 +821,6 @@ void ActionFish(string sPrefix)
 
             // We can use this bait!
             nMod += GetFishInt(FISH_BAIT + Fish.Bait, sFish);
-            FishDebug("Bait mod: " + IntToString(nMod));
         }
 
         // If we have fishing tackle, get all the modifiers from it.
@@ -816,7 +828,6 @@ void ActionFish(string sPrefix)
         {
             sTackle = GetListItem(Fish.Tackle, n);
             nMod += GetFishInt(FISH_TACKLE + sTackle, sFish);
-            FishDebug("Tackle mod: " + IntToString(nMod));
         }
 
         // Get the frequency the fish bites and allow the user to modify it.
@@ -835,16 +846,16 @@ void ActionFish(string sPrefix)
             FishDebug("Success! Checking if we can reel in the " + sFish);
 
             // A fish took our line! Let's check if we catch it.
-            PlayFishingAnimation(FISH_EVENT_NIBBLE);
+            ActionFishEvent(FISH_EVENT_NIBBLE);
             if (OnFishNibbleSuccess(sFish))
             {
                 FishDebug("Success! Reeling in the " + sFish);
-                PlayFishingAnimation(FISH_EVENT_CATCH);
+                ActionFishEvent(FISH_EVENT_CATCH);
                 if (OnFishCatch(sFish))
                     ActionCreateFish(sPrefix + sFish);
             }
             else
-                PlayFishingAnimation(FISH_EVENT_NO_CATCH);
+                ActionFishEvent(FISH_EVENT_NO_CATCH);
 
             return;
         }
@@ -854,8 +865,8 @@ void ActionFish(string sPrefix)
 
     // No fish bit. Run the failure config function.
     FishDebug("\nNo fish bit! The chance of this happening was " + FloatToString(fChance * 100, 0, 2) + "%");
-    OnFishNibbleFail();
-    PlayFishingAnimation(FISH_EVENT_NO_NIBBLE);
+    if (OnFishNibbleFail())
+        ActionFishEvent(FISH_EVENT_NO_NIBBLE);
 }
 
 // ----- Config Function Utilities ---------------------------------------------

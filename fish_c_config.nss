@@ -127,10 +127,15 @@ void OnFishingSetup()
     AddFishMessage(FISH_EVENT_START, "pole", "You cast your line. Now to wait...");
     AddFishMessage(FISH_EVENT_NIBBLE, "pole", "You feel a tug on your line!");
     AddFishMessage(FISH_EVENT_NIBBLE, "pole", "Something took your bait!");
+    AddFishMessage(FISH_EVENT_CATCH, "pole", "After a brief struggle, you reel in the fish.");
+    AddFishMessage(FISH_EVENT_NO_CATCH, "pole", "The line goes slack. It look like he got away.");
 
     AddFishMessage(FISH_EVENT_START, "spear", "You ready your spear, eyes intent on the water...");
     AddFishMessage(FISH_EVENT_NIBBLE, "spear", "There's a fish!");
     AddFishMessage(FISH_EVENT_NIBBLE, "spear", "You spy a fish!");
+
+    AddFishMessage(FISH_EVENT_NO_CATCH, "pole, spear", "Dammit! He got away.");
+    AddFishMessage(FISH_EVENT_NO_NIBBLE, "pole, spear", "You failed to catch anything. Better luck next time!");
 }
 
 // This is a configurable function that runs when the PC uses a fishing bait
@@ -219,9 +224,6 @@ int OnFishingStart()
         return FALSE;
     }
 
-    string sMessage = GetFishMessage(FISH_EVENT_START, GetFishingEquipmentType());
-    ActionFloatingTextString(sMessage);
-
     return TRUE;
 }
 
@@ -235,8 +237,6 @@ int OnFishingStart()
 // Returns: an amount to add to the chance the fish will bite.
 int OnFishNibble(string sFish)
 {
-    string sMessage = GetFishMessage(FISH_EVENT_NIBBLE, GetFishingEquipmentType());
-    ActionFloatingTextString(sMessage);
     return 0;
 }
 
@@ -245,9 +245,10 @@ int OnFishNibble(string sFish)
 // his failure, adding a chance of losing his bait, or having him catch seaweed
 // or an old boot instead.
 // - OBJECT_SELF: the PC who failed to catch a fish.
-void OnFishNibbleFail()
+// Returns: whether to display the failure animation and message.
+int OnFishNibbleFail()
 {
-    ActionFloatingTextString("You failed to catch anything. Better luck next time!");
+    return TRUE;
 }
 
 // This is a configurable function to handle what happens when a PC gets a fish
@@ -285,12 +286,8 @@ void PlayFishingAnimation(int nEvent)
     switch (nEvent)
     {
         case FISH_EVENT_START:
-            // Face the fishing spot.
-            SetFacingPoint(GetPosition(GetFishingSpot()));
-
-            // Play splash sfx
             PlaySound("as_na_splash1");
-            ActionPlayAnimation(ANIMATION_LOOPING_LISTEN, 1.0, 3.0);
+            ActionPlayAnimation(ANIMATION_LOOPING_LISTEN, 1.0, IntToFloat(Random(6) + 4));
             break;
 
         case FISH_EVENT_NIBBLE:
