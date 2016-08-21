@@ -57,12 +57,11 @@ const string FISH_ITEM_PREFIX = "fish_";
 //    refer to your equipment type in these constants and in the config
 //    functions below.
 
-
 // This is a comma-separated list of equipment to be treated as bait when used.
-const string FISH_BAIT_ITEMS = "bait, worm";
+const string FISH_BAIT_ITEMS = "bait, live_bait";
 
 // This is a comma-separated list of equipment to be treated as tackle when used.
-const string FISH_TACKLE_ITEMS = "hook, float, sinker, line, hook_large";
+const string FISH_TACKLE_ITEMS = "hook, float, sinker, line";
 
 // ----- Text Strings ----------------------------------------------------------
 
@@ -162,6 +161,9 @@ int OnFishingBaitUsed(object oEquipment, object oBait)
     if (!GetInheritsFish(sType, "pole"))
         return FALSE;
 
+    // Remove any current bait and give it back to the PC.
+    RemoveFishingBait(TRUE, oEquipment);
+
     // Bait should be single use.
     DestroyObject(oBait);
     return TRUE;
@@ -174,7 +176,7 @@ int OnFishingBaitUsed(object oEquipment, object oBait)
 // tackle from being added, and removing the tackle from the player's inventory
 // when used.
 //
-// You can add tackle to a fish's list using AddFishTacle() in the
+// You can add tackle to a fish's list using AddFishTackle() in the
 // OnFishingSetup() config function below. This function takes a comma-separated
 // list of fish and and tackle, making it easy to add many tackle types to many
 // fish. The function also allows you to add a modifier to the chances a fish
@@ -192,8 +194,14 @@ int OnFishingTackleUsed(object oEquipment, object oTackle)
     if (!GetInheritsFish(sType, "pole"))
         return FALSE;
 
+    // Remove current tackle of the same type and give it back to the PC.
+    sType = GetFishingEquipmentType(oTackle);
+    RemoveFishingTackle(sType, TRUE, oEquipment);
+
     // Tackle should be single use.
     DestroyObject(oTackle);
+
+    // Remove
     return TRUE;
 }
 

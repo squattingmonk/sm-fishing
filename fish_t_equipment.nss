@@ -4,8 +4,8 @@ System:          SM's Fishing System (tag-based script)
 Author:          Michael A. Sinclair (Squatting Monk) <squattingmonk@gmail.com>
 Date Created:    Aug. 9, 2015
 Summary:
-This script handles the OnActivate event for all fishing equipment. Activating
-the item will set up the fishing system automagically. You should not edit this
+This script handles tag-based events for fishing equipment. Acquiring fishing
+equipment will set up the fishing system automagically. You should not edit this
 file. All configurable settings are found in fish_c_config.
 
 If the item is bait or tackle, it will be applied to any fishing equipment the
@@ -31,11 +31,15 @@ Revision Summary:
 
 void main()
 {
-    // Only run OnActivate
-    if (GetUserDefinedItemEventNumber() != X2_ITEM_EVENT_ACTIVATE) return;
+    int nEvent = GetUserDefinedItemEventNumber();
+    int bActivate = (nEvent == X2_ITEM_EVENT_ACTIVATE);
+    int bAcquired = (nEvent == X2_ITEM_EVENT_ACQUIRE);
 
-    object oPC   = GetItemActivator();
-    object oItem = GetItemActivated();
+    if (!bActivate && !bAcquired)
+        return;
+
+    object oPC   = (bActivate ? GetItemActivator() : GetModuleItemAcquiredBy());
+    object oItem = (bActivate ? GetItemActivated() : GetModuleItemAcquired());
 
     // Make sure the fishing system is set up.
     if (InitializeFishingSystem(oPC, oItem, FISH_DEBUG_MODE))
@@ -44,6 +48,13 @@ void main()
         SetFishString(FISH_BAIT,   FISH_BAIT_ITEMS);
         SetFishString(FISH_TACKLE, FISH_TACKLE_ITEMS);
     }
+
+    // Ensure equipment inheritance is set up for this item type.
+    BuildFishInheritanceList();
+
+    // Only run the rest OnActivate
+    if (!bActivate)
+        return;
 
     // If this is a bait item, let the system handle it and abort.
     if (HandleFishingBait(FISH_TEXT_USE_BAIT, FISH_TEXT_NO_EQUIPMENT))
