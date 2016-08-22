@@ -35,6 +35,7 @@ const string FISH_BAIT        = "BAIT";
 const string FISH_DEBUG       = "DEBUG";
 const string FISH_ENVIRONMENT = "ENV";
 const string FISH_EQUIPMENT   = "EQU";
+const string FISH_FREQ        = "FREQ";
 const string FISH_MESSAGE     = "MSG";
 const string FISH_NAME        = "NAME";
 const string FISH_PARENT      = "PARENT";
@@ -169,7 +170,117 @@ void ActionFish(string sPrefix);
 // queue, so the PC will see the message at the appropriate time.
 void FishDebug(string sMessage);
 
-// ---< AddFish >---
+// ---< SetFishFrequency >---
+// ---< fish_i_main >---
+// Sets the frequency at which every fish in sFishList is normally found. This
+// is the percentage of time the fish will pass the nibble check and be caught.
+// This frequency can be modified by the environment, equipment, bait, or tackle
+// and can be modified by the builder using the OnFishNibble() config function.
+void SetFishFrequency(int nFrequency, string sFishList);
+
+// ---< GetFishFrequency >---
+// ---< fish_i_main >---
+// Gets the frequency at which sFish. This is the percentage of time the fish
+// will pass the nibble check and be caught. This frequency can be modified by
+// the environment, equipment, bait, or tackle and can be modified by the
+// builder using the OnFishNibble() config function.
+int GetFishFrequency(string sFish);
+
+// ---< SetFishModifier >---
+// ---< fish_i_main >---
+// Sets the modifier to catch every fish in sFishList when using any item in
+// sModifierList. sType is a key to access the correct list of modifiers. The
+// SetFish*Modifier() functions are wrappers for this function.
+// Note: a value of 0 or lower will guarantee that a fish will not be caught
+// unless its probability is raised in some way, and a value of 100 or higher
+// will guarantee the fish will be caught unless its probability is decreased in
+// some way.
+void SetFishModifier(string sType, int nValue, string sModifierList, string sFishList);
+
+// ---< GetFishModifier >---
+// ---< fish_i_main >---
+// Gets the modifier to catch sFish when using sModifier. sType is a key to
+// access the correct list of modifiers. The GetFish*Modifier() functions are
+// wrappers for this function.
+int GetFishModifier(string sType, string sModifier, string sFish);
+
+// ---< SetFishEnvironmentModifier >---
+// ---< fish_i_main >---
+// Sets the environment modifier for every fish in sFishList to nValue for every
+// environment in sEnvironmentList. A fish can only be found in the environments
+// for which it has modifiers. This can be 0 if you want fish to be found in the
+// environment but have no modifier to frequency.
+// Paremeters:
+// - nValue: a modifier to the percentage of the time a fish will be found in
+//   this environment.
+// - sEnvironmentList: a comma-separated list of environments for the fish.
+// - sFishList: a comma-separated list of the blueprints used to create the fish
+//   on a successful catch.
+void SetFishEnvironmentModifier(int nValue, string sEnvironmentList, string sFishList);
+
+// ---< GetFishEnvironmentModifier >---
+// ---< fish_i_main >---
+// Gets the frequency modifier that sFish has when fishing in sEnvironment.
+int GetFishEnvironmentModifier(string sEnvironment, string sFish);
+
+// ---< SetFishEquipmentModifier >---
+// ---< fish_i_main >---
+// Sets the equipment modifier for every fish in sFishList to nValue for every
+// equipment item in sEquipmentList. If a fish has modifiers for any equipment,
+// it can only be caught with the equipment for which it has modifiers. This can
+// be 0 if you want fish to be caught with the  equipment but have no modifier
+// to frequency.
+// Paremeters:
+// - nValue: a modifier to the percentage of the time a fish will be caught when
+//   using this equipment.
+// - sEquipmentList: a comma-separated list of equipment for the fish.
+// - sFishList: a comma-separated list of the blueprints used to create the fish
+//   on a successful catch.
+void SetFishEquipmentModifier(int nValue, string sEquipmentList, string sFishList);
+
+// ---< GetFishEquipmentModifier >---
+// ---< fish_i_main >---
+// Gets the frequency modifier that sFish has when fishing with sEquipment.
+int GetFishEquipmentModifier(string sEquipment, string sFish);
+
+// ---< SetFishBaitModifier >---
+// ---< fish_i_main >---
+// Sets the bait modifier for every fish in sFishList to nValue for every bait
+// in sBaitList. If a fish has modifiers for any bait and the PC is using bait,
+// the fish can only be caught if it has a modifier for the bait being used.
+// This can be 0 if you want fish to be found in the environment but have no
+// modifier to frequency.
+// Paremeters:
+// - nValue: a modifier to the percentage of the time a fish will be caught when
+//   using this bait.
+// - sEnvironmentList: a comma-separated list of bait items.
+// - sFishList: a comma-separated list of the blueprints used to create the fish
+//   on a successful catch.
+void SetFishBaitModifier(int nValue, string sBaitList, string sFishList);
+
+// ---< GetFishBaitModifier >---
+// ---< fish_i_main >---
+// Gets the frequency modifier that sFish has when fishing with sBait.
+int GetFishBaitModifier(string sBait, string sFish);
+
+// ---< SetFishTackleModifier >---
+// ---< fish_i_main >---
+// Sets the tackle modifier for every fish in sFishList to nValue for every
+// tackle item in sTackleList.
+// Paremeters:
+// - nValue: a modifier to the percentage of the time a fish will be caught when
+//   using this tackle.
+// - sTackleList: a comma-separated list of tackle items.
+// - sFishList: a comma-separated list of the blueprints used to create the fish
+//   on a successful catch.
+void SetFishTackleModifier(int nValue, string sTackleList, string sFishList);
+
+// ---< GetFishTackleModifier >---
+// ---< fish_i_main >---
+// Gets the frequency modifier that sFish has when fishing with sTackle.
+int GetFishTackleModifier(string sTackle, string sFish);
+
+// ---< InheritFish >---
 // ---< fish_i_main >---
 // Sets every item in the CSV list sChildList as inheriting fish from the list
 // of every item in the CSV list sParentList. You can chain inheritance (i.e.,
@@ -188,65 +299,32 @@ void FishDebug(string sMessage);
 // making fish more or less likely to be caught.
 //
 // Example usage for environments:
-// AddFish("freshwater", "lake, pond, river");
-// AddFish("lake", "Murkwater Lake");
+// InheritFish("freshwater", "lake, pond, river");
+// InheritFish("lake", "Murkwater Lake");
 // In this case, every fish found in "freshwater" can also be found in "lake",
 // "pond", and "river"; every fish found in "freshwater" or "lake" can also be
 // found in "Murkwater Lake".
 //
 // Example usage for baits:
-// AddFish("live_bait", "insect, worm, minnow");
-// AddFish("insect", "mayfly, beetle");
+// InheritFish("live_bait", "insect, worm, minnow");
+// InheritFish("insect", "mayfly, beetle");
 // In this case, every fish that eats "live_bait" will also eat "insect", "worm"
 // and "minnow"; every fish that eats in "insect" or "live bait" will also eat
 // "mayfly" and "beetle".
 //
 // Example usage for equipment:
-// AddFish("pole", "pole_light, pole_standard, pole_heavy");
-// AddFish("pole_light", "pole_cane, pole_willow");
+// InheritFish("pole", "pole_light, pole_standard, pole_heavy");
+// InheritFish("pole_light", "pole_cane, pole_willow");
 // In this case, every fish that can be caught with a "pole" can also be caught
 // with a "pole_light"; every fish that can be caught with a "pole" or
 // "pole_light" can also be caught with a "pole_cane" or "pole_willow".
-void AddFish(string sParentList, string sChildList);
+void InheritFish(string sParentList, string sChildList);
 
-// ---< AddFishEnvironments >---
+// ---< GetInheritsFish >---
 // ---< fish_i_main >---
-// Adds fish to a list of possible fishing environments and sets the frequency
-// with which they bite in that environment. Players can only catch fish in the
-// environments where they live.
-// - sFishList: a comma-separated list of the blueprints used to create the fish
-//   on a successful catch.
-// - sEnvironmentList: a comma-separated list of environments for the fish.
-// - nFrequency: the percentage of the time a fish will be found in this
-//   environment. A value of 0 or lower will guarantee that a fish will not be
-//   caught unless its probability is raised in some way, and a value of 100 or
-//   higher will guarantee the fish will be caught unless its probability is
-//   decreased in some way. Default: 0
-void AddFishEnvironments(string sFishList, string sEnvironmentList, int nFrequency = 0);
-
-// ---< AddFishBaits >---
-// ---< fish_i_main >---
-// Modifies the percentage of the time a fish bites when using a given bait.
-// - sFishList: a comma-separated list of the blueprints used to create the fish
-//   on a successful catch.
-// - sBaitList: a comma-separated list of baits the fish may bite on.
-// - nModifier: a modifier to the percentage of the time a fish will bite. (see
-//   the notes on AddFishEnvironments().
-void AddFishBaits(string sFishList, string sBaitList, int nModifier = 0);
-
-// ---< AddFishEquipment >---
-// ---< fish_i_main >---
-// Requires the PC to be fishing with one of the items in sEquipmentList in
-// order to catch any fish in sFishList. If a fish does not have any required
-// equipment, it can be caught using any equipment.
-void AddFishEquipment(string sFishList, string sEquipmentList, int nModifier = 0);
-
-// ---< AddFishTackle >---
-// ---< fish_i_main >---
-// Modifies the chance of catching any fish in sFishList by nModifier whenever
-// fishing with any tackle in sTackleList. The tackle is not required for the
-// fish to be caught.
-void AddFishTackle(string sFishList, string sTackleList, int nModifier = 0);
+// Returns whether sChild (an environment, bait, tackle, or equipment type)
+// inherits fish from any parent in the CSV list sParents, however remotely.
+int GetInheritsFish(string sChild, string sParents);
 
 // ---< AddFishMessage >---
 // ---< fish_i_main >---
@@ -287,12 +365,6 @@ void AddFishMessage(int nEvent, string sKeyList, string sMessage);
 // GetFishMessage(FISH_EVENT_START, "pole");
 string GetFishMessage(int nEvent, string sKey);
 
-// ---< GetInheritsFish >---
-// ---< fish_i_main >---
-// Returns whether sChild (an environment, bait, tackle, or equipment type)
-// inherits fish from any parent in the CSV list sParents, however remotely.
-int GetInheritsFish(string sChild, string sParents);
-
 // ---< IsFishingBaitType >---
 // ---< fish_i_main >---
 // Returns whether sType is a type of bait.
@@ -303,12 +375,12 @@ int IsFishingBaitType(string sType);
 // Returns whether sType is a type of tackle.
 int IsFishingTackleType(string sType);
 
-// ---< GetFishingBaitType >---
+// ---< GetIsFishingBait >---
 // ---< fish_i_main >---
 // Returns whether oEquipment is a type of bait.
 int GetIsFishingBait(object oEquipment = OBJECT_INVALID);
 
-// ---< GetFishingTackleType >---
+// ---< GetIsFishingTackle >---
 // ---< fish_i_main >---
 // Returns whether oEquipment is a type of tackle.
 int GetIsFishingTackle(object oEquipment = OBJECT_INVALID);
@@ -494,7 +566,7 @@ void OnFishingSetup();
 // appropriate tackle has been applied, or removing the bait from the player's
 // inventory when used.
 //
-// You can add baits to a fish's list using AddFishBaits() in the
+// You can add baits to a fish's list using SetFishBaitModifier() in the
 // OnFishingSetup() config function below. This function takes a comma-separated
 // list of fish and and bait, making it easy to add many baits to many fish. The
 // function also allows you to add a modifier to the chances a fish will bite
@@ -515,7 +587,7 @@ int OnFishingBaitUsed(object oEquipment, object oBait);
 // tackle from being added, and removing the tackle from the player's inventory
 // when used.
 //
-// You can add tackle to a fish's list using AddFishTackle() in the
+// You can add tackle to a fish's list using SetFishTackleModifier() in the
 // OnFishingSetup() config function below. This function takes a comma-separated
 // list of fish and and tackle, making it easy to add many tackle types to many
 // fish. The function also allows you to add a modifier to the chances a fish
@@ -806,7 +878,7 @@ void ActionFish(string sPrefix)
     {
         string sParents = StringReplace(Fish.Environment, "+", ",");
         if (GetListCount(sParents) > 1)
-            AddFish(sParents, Fish.Environment);
+            InheritFish(sParents, Fish.Environment);
     }
 
     // Resolve fish inheritance for our environment
@@ -839,7 +911,6 @@ void ActionFish(string sPrefix)
     for (i = 0; i < nCount; i++)
     {
         sFish = GetStringListItem(Fish.Data, (nStart + i) % nCount, FISH_ENVIRONMENT + Fish.Environment);
-        nMod = 0;
 
         // Only spend time compiling these lists if debug mode is on
         if (Fish.Debug)
@@ -848,6 +919,9 @@ void ActionFish(string sPrefix)
             FishDebug("Equipment list: " + CompressList(Fish.Data, sFish + FISH_EQUIPMENT));
             FishDebug("Bait list: " + CompressList(Fish.Data, sFish + FISH_BAIT));
         }
+
+        nMod = GetFishEnvironmentModifier(Fish.Environment, sFish);
+        FishDebug("  Applying environment mod: " + IntToString(nMod));
 
         // If this fish has a set list of items that can catch it...
         if (GetStringListCount(Fish.Data, sFish + FISH_EQUIPMENT))
@@ -860,7 +934,7 @@ void ActionFish(string sPrefix)
             }
 
             // Otherwise, get the modifier for this equipment.
-            nTemp += GetFishInt(FISH_EQUIPMENT + Fish.Type, sFish);
+            nTemp += GetFishEquipmentModifier(Fish.Type, sFish);
             FishDebug("  Applying equipment mod: " + IntToString(nTemp));
             nMod += nTemp;
         }
@@ -877,7 +951,7 @@ void ActionFish(string sPrefix)
             }
 
             // We can use this bait!
-            nTemp += GetFishInt(FISH_BAIT + Fish.Bait, sFish);
+            nTemp += GetFishBaitModifier(Fish.Bait, sFish);
             FishDebug("  Applying bait mod: " + IntToString(nTemp));
             nMod += nTemp;
         }
@@ -886,14 +960,13 @@ void ActionFish(string sPrefix)
         for (n = 0; n < nTackle; n++)
         {
             sTackle = GetListItem(Fish.Tackle, n);
-            //nMod += GetFishInt(FISH_TACKLE + sTackle, sFish);
-            nTemp = GetFishInt(FISH_TACKLE + sTackle, sFish);
+            nTemp = GetFishTackleModifier(sTackle, sFish);
             FishDebug("  Applying tackle mod: " + IntToString(nTemp));
             nMod += nTemp;
         }
 
         // Get the frequency the fish bites and allow the user to modify it.
-        nFreq = GetFishInt(FISH_ENVIRONMENT + Fish.Environment, sFish);
+        nFreq = GetFishFrequency(sFish);
         nMod += OnFishNibble(sFish);
         nChance = nFreq + nMod;
 
@@ -944,71 +1017,89 @@ void FishDebug(string sMessage)
     }
 }
 
-// Private function called by AddFish*() functions to populate fish lists.
-void ExplodeFishList(string sFishList, string sItemList, string sListType, int nValue)
+void SetFishFrequency(int nFrequency, string sFishList)
 {
-    if (sFishList == "" || sItemList == "") return;
+    SetFishInt(FISH_FREQ, nFrequency, sFishList);
+}
+
+int GetFishFrequency(string sFish)
+{
+    return GetFishInt(FISH_FREQ, sFish);
+}
+
+void SetFishModifier(string sType, int nValue, string sModifierList, string sFishList)
+{
+    if (sFishList == "" || sModifierList == "") return;
 
     string sFish, sItem;
     int i, nFish = GetListCount(sFishList);
-    int j, nItem = GetListCount(sItemList);
+    int j, nItem = GetListCount(sModifierList);
 
     for (i = 0; i < nFish; i++)
     {
         sFish = GetListItem(sFishList, i);
         for (j = 0; j < nItem; j++)
         {
-            sItem = GetListItem(sItemList, j);
+            sItem = GetListItem(sModifierList, j);
 
             // Add the item to the fish's list and vice versa
-            if (AddStringListItem(Fish.Data, sFish, sListType + sItem, TRUE))
-                AddStringListItem(Fish.Data, sItem, sFish + sListType);
+            if (AddStringListItem(Fish.Data, sFish, sType + sItem, TRUE))
+                AddStringListItem(Fish.Data, sItem, sFish + sType);
 
-            // Add the frequency or modifier for this item to the fish.
-            SetLocalInt(Fish.Data, sFish + sListType + sItem, nValue);
+            // Add the modifier for this item to the fish.
+            SetLocalInt(Fish.Data, sFish + sType + sItem, nValue);
         }
     }
 }
 
-// Sets the following each run
-// Name                    Type         Purpose
-// "PARENT<child>"         string list  all parent types inherited by <child>
-// "<parent>PARENT"        string list  all child types that inherit from <parent>
-// "<parent>PARENT<child>" int          whether <child> inherits from <parent>
-void AddFish(string sParentList, string sChildList)
+int GetFishModifier(string sType, string sModifier, string sFish)
 {
-    ExplodeFishList(sParentList, sChildList, FISH_PARENT, TRUE);
+    return GetFishInt(sType + sModifier, sFish);
 }
 
 // Sets the following each run:
 // Name                      Type         Purpose
 // "ENV<environment>"        string list  all fish in <environment>
 // "<fish>ENV"               string list  all environments where <fish> is found
-// "<fish>ENV<environment>"  int          frequency of <fish> in <environment>
-void AddFishEnvironments(string sFishList, string sEnvironmentList, int nFrequency = 0)
+// "<fish>ENV<environment>"  int          modifier to catch <fish> in <environment>
+void SetFishEnvironmentModifier(int nValue, string sEnvironmentList, string sFishList)
 {
-    FishDebug("Adding " + sFishList + " to " + sEnvironmentList);
-    ExplodeFishList(sFishList, sEnvironmentList, FISH_ENVIRONMENT, nFrequency);
+    SetFishModifier(FISH_ENVIRONMENT, nValue, sEnvironmentList, sFishList);
 }
 
-// Sets the following data for each fish and bait:
-// Name                Type         Purpose
-// "BAIT<bait>"        string list  all fish that eat <bait>
-// "<fish>BAIT"        string list  all bait that can catch <fish>
-// "<fish>BAIT<bait>"  int          <fish>'s preference for <bait>
-void AddFishBaits(string sFishList, string sBaitList, int nModifier = 0)
+int GetFishEnvironmentModifier(string sEnvironment, string sFish)
 {
-    ExplodeFishList(sFishList, sBaitList, FISH_BAIT, nModifier);
+    return GetFishInt(FISH_ENVIRONMENT + sEnvironment, sFish);
 }
 
 // Sets the following each run
 // Name                    Type         Purpose
-// "EQU<equipment>"        string list  all fish catchable with <equipment>
+// "EQU<equipment>"        string list  all fish whose catching modified by <equipment>
 // "<fish>EQU"             string list  all equipment that can catch <fish>
 // "<fish>EQU<equipment>"  int          modifier to catch <fish> with <equipment>
-void AddFishEquipment(string sFishList, string sEquipmentList, int nModifier = 0)
+void SetFishEquipmentModifier(int nValue, string sEquipmentList, string sFishList)
 {
-    ExplodeFishList(sFishList, sEquipmentList, FISH_EQUIPMENT, nModifier);
+    SetFishModifier(FISH_EQUIPMENT, nValue, sEquipmentList, sFishList);
+}
+
+int GetFishEquipmentModifier(string sEquipment, string sFish)
+{
+    return GetFishInt(FISH_EQUIPMENT + sEquipment, sFish);
+}
+
+// Sets the following data for each fish and bait:
+// Name                Type         Purpose
+// "BAIT<bait>"        string list  all fish whose catching modified by <bait>
+// "<fish>BAIT"        string list  all bait that can catch <fish>
+// "<fish>BAIT<bait>"  int          modifier to catch <fish> with <bait>
+void SetFishBaitModifier(int nValue, string sBaitList, string sFishList)
+{
+    SetFishModifier(FISH_BAIT, nValue, sBaitList, sFishList);
+}
+
+int GetFishBaitModifier(string sBait, string sFish)
+{
+    return GetFishInt(FISH_BAIT + sBait, sFish);
 }
 
 // Sets the following each run
@@ -1016,9 +1107,42 @@ void AddFishEquipment(string sFishList, string sEquipmentList, int nModifier = 0
 // "TACKLE<tackle>"        string list  all fish whose catching modified by <tackle>
 // "<fish>TACKLE"          string list  all tackle that modifies catching <fish>
 // "<fish>TACKLE<tackle>"  int          modifier to catch <fish> with <tackle>
-void AddFishTackle(string sFishList, string sTackleList, int nModifier = 0)
+void SetFishTackleModifier(int nValue, string sTackleList, string sFishList)
 {
-    ExplodeFishList(sFishList, sTackleList, FISH_TACKLE, nModifier);
+    SetFishModifier(FISH_TACKLE, nValue, sTackleList, sFishList);
+}
+
+int GetFishTackleModifier(string sTackle, string sFish)
+{
+    return GetFishInt(FISH_TACKLE + sTackle, sFish);
+}
+
+// Sets the following each run
+// Name                    Type         Purpose
+// "PARENT<child>"         string list  all parent types inherited by <child>
+// "<parent>PARENT"        string list  all child types that inherit from <parent>
+// "<parent>PARENT<child>" int          whether <child> inherits from <parent>
+void InheritFish(string sParentList, string sChildList)
+{
+    SetFishModifier(FISH_PARENT, TRUE, sChildList, sParentList);
+}
+
+int GetInheritsFish(string sChild, string sParents)
+{
+    // Sanity check
+    if (sChild == "" || sParents == "")
+        return FALSE;
+
+    string sParent;
+    int i, nCount = GetListCount(sParents);
+    for (i = 0; i < nCount; i++)
+    {
+        sParent = GetListItem(sParents, i);
+        if (sParent == sChild || GetLocalInt(Fish.Data, sParent + FISH_PARENT + sChild))
+            return TRUE;
+    }
+
+    return FALSE;
 }
 
 // Sets the following each run
@@ -1048,24 +1172,6 @@ string GetFishMessage(int nEvent, string sKey)
     string sName = IntToString(nEvent) + FISH_MESSAGE;
     int nCount = BuildFishList(sKey, sName);
     return GetStringListItem(Fish.Data, Random(nCount), sName + sKey);
-}
-
-int GetInheritsFish(string sChild, string sParents)
-{
-    // Sanity check
-    if (sChild == "" || sParents == "")
-        return FALSE;
-
-    string sParent;
-    int i, nCount = GetListCount(sParents);
-    for (i = 0; i < nCount; i++)
-    {
-        sParent = GetListItem(sParents, i);
-        if (sParent == sChild || GetLocalInt(Fish.Data, sParent + FISH_PARENT + sChild))
-            return TRUE;
-    }
-
-    return FALSE;
 }
 
 int IsFishingBaitType(string sType)

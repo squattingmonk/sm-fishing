@@ -26,7 +26,7 @@ Revision Summary:
 
 // If this is true, fishing will generate debug calls. This may be useful for
 // tracking down errors in any of the config functions.
-const int FISH_DEBUG_MODE = FALSE;
+const int FISH_DEBUG_MODE = TRUE;
 
 // This is the maximum distance, in meters, that a PC may be from a waypoint
 // fishing spot to fish using any equipment. If this value is 0.0 or less, the
@@ -94,32 +94,37 @@ const string FISH_TEXT_NO_SPOT      = "This doesn't look like a good place to fi
 // first time a fishing item is used in your module.
 void OnFishingSetup()
 {
+    // ----- Fish Definitions --------------------------------------------------
+
+    SetFishFrequency(20, "trout, bass");
+
     // ----- Environment Definitions -------------------------------------------
 
-    AddFish("freshwater", "lake, pond, river");
+    InheritFish("freshwater", "lake, pond, river");
 
-    AddFishEnvironments("trout, bass", "freshwater", 20);
-    AddFishEnvironments("trout", "pond, river", 30);
-
-    // ----- Bait Definitions --------------------------------------------------
-
-    AddFish("live_bait", "insect, worm, minnow");
-
-    AddFishBaits("trout, bass", "live_bait");
-    AddFishBaits("trout", "worm", 10);
-    AddFishBaits("bass", "minnow", 10);
-
-    // ----- Tackle Definitions ------------------------------------------------
-
-    AddFish("hook", "hook_large");
-
-    AddFishTackle("trout", "hook_large", -10);
+    SetFishEnvironmentModifier(0, "freshwater", "trout, bass");
+    SetFishEnvironmentModifier(10, "pond, river", "trout");
 
     // ----- Equipment Definitions ---------------------------------------------
 
-    AddFish("pole", "pole_light, pole_standard, pole_heavy");
+    InheritFish("pole", "pole_light, pole_standard, pole_heavy");
 
-    AddFishEquipment("trout", "pole");
+    SetFishEquipmentModifier(0, "trout", "pole");
+
+    // ----- Bait Definitions --------------------------------------------------
+
+    InheritFish("live_bait", "insect, worm, minnow");
+
+    SetFishBaitModifier(0, "live_bait", "trout, bass");
+    SetFishBaitModifier(10, "worm", "trout");
+    SetFishBaitModifier(10, "minnow", "bass");
+
+    // ----- Tackle Definitions ------------------------------------------------
+
+    InheritFish("hook", "hook_large");
+
+    SetFishTackleModifier(-10, "hook_large", "trout");
+    SetFishTackleModifier(10, "hook_large", "bass");
 
     // ----- Event Messages-----------------------------------------------------
 
@@ -200,8 +205,6 @@ int OnFishingTackleUsed(object oEquipment, object oTackle)
 
     // Tackle should be single use.
     DestroyObject(oTackle);
-
-    // Remove
     return TRUE;
 }
 
