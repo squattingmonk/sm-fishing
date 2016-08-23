@@ -42,15 +42,7 @@ void main()
     object oItem = (bActivate ? GetItemActivated() : GetModuleItemAcquired());
 
     // Make sure the fishing system is set up.
-    if (InitializeFishingSystem(oPC, oItem, FISH_DEBUG_MODE))
-    {
-        // We're running for the first time, so set our bait and tackle lists.
-        SetFishString(FISH_BAIT,   FISH_BAIT_ITEMS);
-        SetFishString(FISH_TACKLE, FISH_TACKLE_ITEMS);
-    }
-
-    // Ensure equipment inheritance is set up for this item type.
-    BuildFishInheritanceList();
+    InitializeFishingSystem(oPC, oItem, FISH_DEBUG_MODE, FISH_BAIT_ITEMS, FISH_TACKLE_ITEMS);
 
     // Only run the rest OnActivate
     if (!bActivate)

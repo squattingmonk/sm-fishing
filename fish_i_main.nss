@@ -90,19 +90,11 @@ struct FishingData Fish;
 
 // ---< InitializeFishingSystem >---
 // ---< fish_i_main >---
-// Runs the config function OnFishingSetup() if it has not been run yet, turning
-// on debug mode if bDebugMode is TRUE or if oPC or oEquipment has a local int
-// named "DEBUG" set to TRUE. Returns whether this was its first run.
+// Runs the config function OnFishingSetup() if it has not been run yet. Runs
+// the config function OnFishingSetup() if it has not been run yet, then sets
+// the debug mode and lists of bait and tackle items.
 // Note: This is an internal function and should not be used by the builder.
-int InitializeFishingSystem(object oPC, object oEquipment, int bDebugMode);
-
-// ---< BuildFishInheritanceList >---
-// ---< fish_i_main >---
-// Ensures that the fishing equipment that has been acquired or activated has
-// its inheritance set up so that its type is properly detected by other system
-// functions.
-// Note: This is an internal function and should not be used by the builder.
-void BuildFishInheritanceList();
+void InitializeFishingSystem(object oPC, object oItem, int bDebugMode, string sBaitList, string sTackleList);
 
 // ---< BuildFishingEquipmentDescription >---
 // ---< fish_i_main >---
@@ -114,11 +106,19 @@ void BuildFishingEquipmentDescription(object oEquipment);
 // ---< fish_i_main >---
 // If the item the PC is currently using is a bait item, checks to see if the
 // item can be used with the currently equipped item. If so, it applies the bait
-// and sends the message sSuccess to the PC. If not, it re-creates the item in
-// the PC's inventory and sends the message sError. Returns whether this was a
-// bait item.
+// and sends the message sSuccess to the PC. If not, it sends the message sError.
+// Returns whether this was a bait item.
 // Note: This is an internal function and should not be used by the builder.
 int HandleFishingBait(string sSuccess, string sError);
+
+// ---< HandleFishingTackle >---
+// ---< fish_i_main >---
+// If the item the PC is currently using is a tackle item, checks to see if the
+// item can be used with the currently equipped item. If so, it applies the
+// tackle and sends the message sSuccess to the PC. If not, it sends the message
+// sError. Returns whether this was a tackle item.
+// Note: This is an internal function and should not be used by the builder.
+int HandleFishingTackle(string sSuccess, string sError);
 
 // ---< VerifyFishingSpot >---
 // ---< fish_i_main >---
@@ -164,10 +164,19 @@ void ActionFish(string sPrefix);
 
 // These functions are usable within the config functions listed below.
 
+// ---< SetFishDebug >---
+// ---< fish_i_main >---
+// Sets debug mode on oTarget to bDebug. If oTarget is invalid, will change
+// debug mode for the whole module. If debug mode is on, fishing will generate
+// debug messages. This may be useful for tracking down errors in any of the
+// config functions.
+void SetFishDebug(int bDebug, object oTarget = OBJECT_INVALID);
+
 // ---< FishDebug >---
 // ---< fish_i_main >---
-// If debug mode is on, sends sMessage to the PC. This is done using the action
-// queue, so the PC will see the message at the appropriate time.
+// If debug mode is on, sends sMessage to the fishing PC and writes the message
+// to the log. This is done using the action queue, so the PC will see the
+// message at the appropriate time.
 void FishDebug(string sMessage);
 
 // ---< SetFishFrequency >---
@@ -285,6 +294,8 @@ int GetFishTackleModifier(string sTackle, string sFish);
 // Sets every item in the CSV list sChildList as inheriting fish from the list
 // of every item in the CSV list sParentList. You can chain inheritance (i.e.,
 // "Murkwater Lake" inherits from "lake" which inherits from "freshwater").
+// Ensure that no two items inherit from each other, no matter how remotely, or
+// the system will loop infinitely when climbing the inheritance tree.
 //
 // The parent and children can be environments, baits, tackle, or equipment, but
 // do not let different types inherit from each other (e.g., a bait inherit from
@@ -325,6 +336,12 @@ void InheritFish(string sParentList, string sChildList);
 // Returns whether sChild (an environment, bait, tackle, or equipment type)
 // inherits fish from any parent in the CSV list sParents, however remotely.
 int GetInheritsFish(string sChild, string sParents);
+
+// ---< GetInheritsFishFrom >---
+// ---< fish_i_main >---
+// Returns a CSV list of all parent types of sType (an environment, bait,
+// tackle, or equipment type).
+string GetInheritsFishFrom(string sType);
 
 // ---< AddFishMessage >---
 // ---< fish_i_main >---
@@ -668,7 +685,7 @@ void PlayFishingAnimation(int nEvent);
 
 // ----- Private System Functions ----------------------------------------------
 
-int InitializeFishingSystem(object oPC, object oItem, int bDebugMode)
+void InitializeFishingSystem(object oPC, object oItem, int bDebugMode, string sBaitList, string sTackleList)
 {
     // Should we debug?
     Fish.Debug = bDebugMode                     ? TRUE :
@@ -688,15 +705,13 @@ int InitializeFishingSystem(object oPC, object oItem, int bDebugMode)
 
         // Run our config function.
         OnFishingSetup();
-        return TRUE;
+
+        // Set our fishing bait and tackle items.
+        SetLocalString(Fish.Data, FISH_BAIT, sBaitList);
+        SetLocalString(Fish.Data, FISH_TACKLE, sTackleList);
     }
 
-    // Our waypoint already exists, so this is not the first time we've run.
-    return FALSE;
-}
-
-void BuildFishInheritanceList()
-{
+    // Ensure equipment inheritance is set up for this item type.
     BuildFishList(Fish.Type, FISH_PARENT);
 }
 
@@ -820,38 +835,28 @@ void MergeFishList(string sTarget, string sSource, string sListType)
     }
 }
 
-int BuildFishList(string sItem, string sListType)
+int BuildFishList(string sChild, string sListType)
 {
-    // Sanity check
-    if (sItem == "") return 0;
-
     // See if this list has already been built. If so, we can short-circuit.
-    if (GetLocalInt(Fish.Data, sListType + sItem))
-        return GetStringListCount(Fish.Data, sListType + sItem);
+    if (GetLocalInt(Fish.Data, sListType + sChild))
+        return GetStringListCount(Fish.Data, sListType + sChild);
+
+    FishDebug("Building " + sListType + " list for " + sChild);
 
     // It hasn't. Let's check any parents it has and merge them into the list.
     string sParent;
-    int i, nCount = GetStringListCount(Fish.Data, FISH_PARENT + sItem);
+    int i, nCount = GetStringListCount(Fish.Data, FISH_PARENT + sChild);
     for (i = 0; i < nCount; i++)
     {
-        sParent = GetStringListItem(Fish.Data, i, FISH_PARENT + sItem);
-
-        // If the relation between parent and child has been established, skip
-        // this parent. This will prevent us from looping infinitely if two
-        // items inherit from each other.
-        if (sListType == FISH_PARENT &&
-            GetLocalInt(Fish.Data, sParent + FISH_PARENT + sItem))
-            continue;
-
         // The parent must be resolved before we can merge it into the child.
-        FishDebug("Building " + sListType + " list for " + sParent);
+        sParent = GetStringListItem(Fish.Data, i, FISH_PARENT + sChild);
         BuildFishList(sParent, sListType);
-        MergeFishList(sItem, sParent, sListType);
+        MergeFishList(sChild, sParent, sListType);
     }
 
     // Mark the list as built.
-    SetLocalInt(Fish.Data, sListType + sItem, TRUE);
-    return GetStringListCount(Fish.Data, sListType + sItem);
+    SetLocalInt(Fish.Data, sListType + sChild, TRUE);
+    return GetStringListCount(Fish.Data, sListType + sChild);
 }
 
 void ActionFishEvent(int nEvent)
@@ -934,7 +939,7 @@ void ActionFish(string sPrefix)
             }
 
             // Otherwise, get the modifier for this equipment.
-            nTemp += GetFishEquipmentModifier(Fish.Type, sFish);
+            nTemp = GetFishEquipmentModifier(Fish.Type, sFish);
             FishDebug("  Applying equipment mod: " + IntToString(nTemp));
             nMod += nTemp;
         }
@@ -951,7 +956,7 @@ void ActionFish(string sPrefix)
             }
 
             // We can use this bait!
-            nTemp += GetFishBaitModifier(Fish.Bait, sFish);
+            nTemp = GetFishBaitModifier(Fish.Bait, sFish);
             FishDebug("  Applying bait mod: " + IntToString(nTemp));
             nMod += nTemp;
         }
@@ -1006,6 +1011,15 @@ void ActionFish(string sPrefix)
 
 // ----- Config Function Utilities ---------------------------------------------
 
+void SetFishDebug(int bDebug, object oTarget = OBJECT_INVALID)
+{
+    if (!GetIsObjectValid(oTarget))
+        oTarget = Fish.Data;
+
+    SetLocalInt(oTarget, FISH_DEBUG, bDebug);
+    Fish.Debug = bDebug;
+}
+
 void FishDebug(string sMessage)
 {
     if (Fish.Debug)
@@ -1014,6 +1028,8 @@ void FishDebug(string sMessage)
             ActionDoCommand(SendMessageToPC(Fish.PC, sMessage));
         else
             SendMessageToPC(Fish.PC, sMessage);
+
+        PrintString(sMessage);
     }
 }
 
@@ -1145,6 +1161,12 @@ int GetInheritsFish(string sChild, string sParents)
     return FALSE;
 }
 
+string GetInheritsFishFrom(string sType)
+{
+    BuildFishList(sType, FISH_PARENT);
+    return CompressList(Fish.Data, FISH_PARENT + sType);
+}
+
 // Sets the following each run
 // Name               Type         Purpose
 // "<event>MSG<key>"  string list  messages for <key> during <event>
@@ -1176,7 +1198,8 @@ string GetFishMessage(int nEvent, string sKey)
 
 int IsFishingBaitType(string sType)
 {
-    return GetInheritsFish(sType, GetLocalString(Fish.Data, FISH_BAIT));
+    string sBaitList = GetLocalString(Fish.Data, FISH_BAIT);
+    return GetInheritsFish(sType, (sBaitList == "" ? "bait" : sBaitList));
 }
 
 int IsFishingTackleType(string sType)
