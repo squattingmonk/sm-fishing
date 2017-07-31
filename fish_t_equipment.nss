@@ -42,27 +42,24 @@ void main()
     object oItem = (bActivate ? GetItemActivated() : GetModuleItemAcquired());
 
     // Make sure the fishing system is set up.
-    InitializeFishingSystem(oPC, oItem, FISH_DEBUG_MODE, FISH_BAIT_ITEMS, FISH_TACKLE_ITEMS);
+    InitializeFishingSystem(oPC, oItem);
 
     // Only run the rest OnActivate
     if (!bActivate)
         return;
 
-    // If this is a bait item, let the system handle it and abort.
-    if (HandleFishingBait(FISH_TEXT_USE_BAIT, FISH_TEXT_NO_EQUIPMENT))
+    // If this item is tackle, let the system handle it and abort.
+    if (HandleFishingTackle(GetItemActivatedTarget()))
         return;
 
-    // If this is a tackle item, let the system handle it and abort.
-    if (HandleFishingTackle(FISH_TEXT_USE_TACKLE, FISH_TEXT_NO_EQUIPMENT))
+    // If the PC is not using the required tackle, abort.
+    if (!VerifyFishingTackle())
         return;
 
     // If there is no fishing spot nearby, abort.
-    if (!VerifyFishingSpot(FISH_MAX_DISTANCE))
-    {
-        FloatingTextStringOnCreature(FISH_TEXT_NO_SPOT, oPC, FALSE);
+    if (!VerifyFishingSpot())
         return;
-    }
 
     //  We passed all our checks. Now we fish!
-    AssignCommand(oPC, ActionFish(FISH_ITEM_PREFIX));
+    AssignCommand(oPC, ActionFish());
 }
