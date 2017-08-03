@@ -31,6 +31,7 @@ const string FISH_WP_FISHING = "fish_fishingspot";
 const string FISH_WP_GENERIC = "nw_waypoint001";
 
 // Local variables names.
+const string FISH_BLACKLIST       = "BLACKLIST";
 const string FISH_DEBUG           = "DEBUG";
 const string FISH_DISTANCE        = "DISTANCE";
 const string FISH_ENVIRONMENT     = "ENV";
@@ -38,13 +39,13 @@ const string FISH_EQUIPMENT       = "EQU";
 const string FISH_FREQ            = "FREQ";
 const string FISH_MESSAGE         = "MSG";
 const string FISH_NAME            = "NAME";
-const string FISH_PARENT          = "PARENT";
 const string FISH_RESREF          = "RESREF";
 const string FISH_TACKLE          = "TACKLE";
 const string FISH_TACKLE_SLOT     = "SLOT";
 const string FISH_TACKLE_REQUIRED = "REQUIRED";
 const string FISH_TACKLE_OPTIONAL = "OPTIONAL";
 const string FISH_TAG             = "TAG";
+const string FISH_WHITELIST       = "WHITELIST";
 
 // Fishing events for animation
 const int FISH_EVENT_START       = 0;
@@ -72,6 +73,8 @@ struct FishingData
     object Item;        // The PC's current fishing equipment
     string Type;        // The type of equipment the PC is using
     string Tackle;      // List of what tackle the equipment is using
+    string Full;        // List of tackle slots with tackle in them
+    string Empty;       // List of tackle slots with no tackle in them
     int    Debug;       // Whether to debug fishing functions
 };
 
@@ -276,37 +279,6 @@ string GetFish(int nNth);
 // combination with GetFish() to loop through all defined fish.
 int GetFishCount();
 
-// ---< RequireFishEnvironment >---
-// ---< fish_i_main >---
-// Sets every fish in the CSV list sFishList as being found in every environment
-// in the CSV list sEnvironmentList. If this function is called on a fish, it
-// can only be found in these environments. If this function is not called on a
-// fish, it can be found in any environment. This function can be called on the
-// same fish multiple times; it will add any new environments on each run.
-void RequireFishEnvironment(string sEnvironmentList, string sFishList);
-
-// ---< RequireFishEquipment >---
-// ---< fish_i_main >---
-// Sets every fish in the CSV list sFishList as being catchable with every type
-// of equipment in the CSV list sEquipmentList. If this function is called on a
-// fish, it can only be caught with these equipment types. If this function is
-// not called on a fish, it can be caught with any equipment. This function can
-// be called on the same fish multiple times; it will add any new equipment
-// types on each run.
-void RequireFishEquipment(string sEquipmentList, string sFishList);
-
-// ---< RequireFishTackle >---
-// ---< fish_i_main >---
-// Sets every fish in the CSV list sFishList as being catchable with every type
-// of tackle in the CSV list sTackleList. If the PC is using an equipment type
-// with a slot that fits any of these tackle types, he must be using one of
-// those tackle types to catch the fish. If his equipment has multiple slots
-// that match tackle types in this list, each slot must be occupied by one of
-// these tackle types. If this function is not called on a fish, it can be
-// caught with any tackle. This function can be called on the same fish multiple
-// times; it will add any new tackle types on each run.
-void RequireFishTackle(string sTackleList, string sFishList);
-
 // ---< GetFishFrequency >---
 // ---< fish_i_main >---
 // Gets the frequency of sFish. This is the percentage of time the fish will
@@ -333,7 +305,7 @@ int GetFishModifier(string sType, string sModifier, string sFish);
 // ---< fish_i_main >---
 // Sets the environment modifier for every fish in sFishList to nValue for every
 // environment in sEnvironmentList.
-// Paremeters:
+// Parameters:
 // - nValue: a modifier to the percentage of the time a fish will be found in
 //   this environment.
 // - sEnvironmentList: a comma-separated list of environments for the fish.
@@ -350,7 +322,7 @@ int GetFishEnvironmentModifier(string sEnvironment, string sFish);
 // ---< fish_i_main >---
 // Sets the equipment modifier for every fish in sFishList to nValue for every
 // equipment item in sEquipmentList.
-// Paremeters:
+// Parameters:
 // - nValue: a modifier to the percentage of the time a fish will be caught when
 //   using this equipment.
 // - sEquipmentList: a comma-separated list of equipment for the fish.
@@ -368,7 +340,7 @@ int GetFishEquipmentModifier(string sEquipment, string sFish);
 // Sets a modifier for every fish in sFishList to nValue for every tackle slot
 // in sSlotList. If the PC is using tackle that falls into any of these slots,
 // the modifier will be applied.
-// Paremeters:
+// Parameters:
 // - nValue: a modifier to the percentage of the time a fish will be caught when
 //   using tackle that fits this slot.
 // - sSlotList: a comma-separated list of tackle slots.
@@ -386,7 +358,7 @@ int GetFishTackleSlotModifier(string sSlot, string sFish);
 // ---< fish_i_main >---
 // Sets the tackle modifier for every fish in sFishList to nValue for every
 // tackle item in sTackleList.
-// Paremeters:
+// Parameters:
 // - nValue: a modifier to the percentage of the time a fish will be caught when
 //   using this tackle.
 // - sTackleList: a comma-separated list of tackle items.
@@ -398,6 +370,104 @@ void SetFishTackleModifier(int nValue, string sTackleList, string sFishList);
 // ---< fish_i_main >---
 // Gets the frequency modifier to catch sFish when fishing with sTackle.
 int GetFishTackleModifier(string sTackle, string sFish);
+
+// ---< WhitelistFish >---
+// ---< fish_i_main >---
+// Sets every fish in sFishList as being catchable only when fishing with a
+// condition in sWhitelist. sType is a key to access the correct list of
+// conditions. The WhitelistFish*() functions are wrappers for this function.
+void WhitelistFish(string sType, string sWhitelist, string sFishList);
+
+// ---< WhitelistFishEnvironment >---
+// ---< fish_i_main >---
+// Sets every fish in sFishList as being catchable only when fishing in an
+// environment in sWhitelist. If a fishing spot has multiple environments, only
+// one must be present for the fish to be able to be caught.
+void WhitelistFishEnvironment(string sWhitelist, string sFishList);
+
+// ---< WhitelistFishEquipment >---
+// ---< fish_i_main >---
+// Sets every fish in sFishList as being catchable only when fishing with
+// equipment in sWhitelist.
+void WhitelistFishEquipment(string sWhitelist, string sFishList);
+
+// ---< WhitelistFishTackleSlot >---
+// ---< fish_i_main >---
+// Sets every fish in sFishList as being catchable only when fishing with tackle
+// in all slots found in sWhitelist. The PC will not be penalized for not having
+// tackle his equipment does not support; if you wish this to happen, limit the
+// equipment the fish can be caught with using WhitelistFishEquipment(). If the
+// PC's equipment supports multiple tackle slots found in this list, all of them
+// must be filled to catch this fish.
+void WhitelistFishTackleSlot(string sWhitelist, string sFishList);
+
+// ---< WhitelistFishTackle >---
+// ---< fish_i_main >---
+// Sets every fish in sFishList as being catchable only when fishing with tackle
+// found in sWhitelist. The PC will not be penalized for not having tackle his
+// equipment does not support; if you wish this to happen, limit the equipment
+// the fish can be caught with using WhitelistFishEquipment(). Any tackle slot
+// which can be filled by a tackle item in this list must be so. If there is no
+// tackle in this list that can fill a given slot, the PC may use any tackle in
+// that slot to catch the fish.
+void WhitelistFishTackle(string sWhitelist, string sFishList);
+
+// ---< BlacklistFish >---
+// ---< fish_i_main >---
+// Sets every fish in sFishList as not being catchable when fishing with a
+// condition in sBlacklist. sType is a key to access the correct list of
+// conditions. The BlacklistFish*() functions are wrappers for this function.
+void BlacklistFish(string sType, string sBlacklist, string sFishList);
+
+// ---< BlacklistFishEnvironment >---
+// ---< fish_i_main >---
+// Sets every fish in sFishList as not being catchable only when fishing in an
+// environment in sBlacklist. If a fishing spot has multiple environments, only
+// one must be present for the fish to not be able to be caught.
+void BlacklistFishEnvironment(string sBlacklist, string sFishList);
+
+// ---< BlacklistFishEquipment >---
+// ---< fish_i_main >---
+// Sets every fish in sFishList as not being catchable when fishing with
+// equipment in sBlacklist.
+void BlacklistFishEquipment(string sBlacklist, string sFishList);
+
+// ---< BlacklistFishTackleSlot >---
+// ---< fish_i_main >---
+// Sets every fish in sFishList as not being catchable when fishing with tackle
+// in any slot found in sBlacklist. If the PC's equipment supports multiple
+// tackle slots found in this list, all of them must be empty to catch this fish.
+void BlacklistFishTackleSlot(string sBlacklist, string sFishList);
+
+// ---< BlacklistFishTackle >---
+// ---< fish_i_main >---
+// Sets every fish in sFishList as not being catchable when fishing with tackle
+// found in sBlacklist.
+void BlacklistFishTackle(string sBlacklist, string sFishList);
+
+// ---< HasFishWhitelist >---
+// ---< fish_i_main >---
+// Returns whether a whitelist exists for sFish of type sType. sType is a key to
+// access the correct list of conditions.
+int HasFishWhitelist(string sType, string sFish);
+
+// ---< InFishWhitelist >---
+// ---< fish_i_main >---
+// Returns whether sFish's whitelist of type sType contains sItem. sType is a
+// key to access the correct list of conditions.
+int InFishWhitelist(string sType, string sItem, string sFish);
+
+// ---< HasFishBlacklist >---
+// ---< fish_i_main >---
+// Returns whether a blacklist exists for sFish of type sType. sType is a key to
+// access the correct list of conditions.
+int HasFishBlacklist(string sType, string sFish);
+
+// ---< InFishBlacklist >---
+// ---< fish_i_main >---
+// Returns whether sFish's blacklist of type sType contains sItem. sType is a
+// key to access the correct list of conditions.
+int InFishBlacklist(string sType, string sItem, string sFish);
 
 
 // ----- Fishing Message Functions ---------------------------------------------
@@ -411,8 +481,9 @@ int GetFishTackleModifier(string sTackle, string sFish);
 // - sKeyList: a comma-separated list of keys to identify the proper message to
 //   send. If sKeyList is blank, the message will be defined globally.
 //   - For the START, NIBBLE, CATCH, NO_NIBBLE, and NO_CATCH events, the key
-//     should be an equipment type. Other events are up to the builder to
-//     implement, and so may be keyed how you wish.
+//     should be an equipment type.
+//   - The NO_TACKLE event may be either an equipment type or a tackle slot.
+//   - Other events are up to the builder to implement. Key them as you wish.
 //   - Keys will inherit globally defined messages, even if the key has
 //     explicitly defined messages.
 //   - Keys can be repeated multiple times to increase the frequency with which
@@ -434,13 +505,36 @@ void AddFishMessage(int nEvent, string sKeyList, string sMessage);
 //   can also use your own event numbers, as long as they are > 10.
 // - sKey: a key to identify the proper message to return.
 //   - For the START, NIBBLE, CATCH, NO_NIBBLE, and NO_CATCH events, the key
-//     should be an equipment type. Other events are up to the builder to
-//     implement, and so may be keyed how you wish.
+//     should be an equipment type.
+//   - The NO_TACKLE event may be either an equipment type or a tackle slot.
+//   - Other events are up to the builder to implement. Key them as you wish.
+//   - If blank, will return a globally defined message for this event.
 //   - Keys will inherit globally defined messages, even if the key has
 //     explicitly defined messages.
 // Example usage:
 // GetFishMessage(FISH_EVENT_START, "pole");
-string GetFishMessage(int nEvent, string sKey);
+string GetFishMessage(int nEvent, string sKey = "");
+
+// ---< FloatingFishMessage >---
+// ---< fish_i_main >---
+// Causes a random message to be displayed to the player during nEvent. You can
+// add messages to display using AddFishMessage(). If you wish to add the
+// message into the action queue so it is displayed at the proper time, use
+// ActionFloatingFishMessage() instead.
+// Parameters:
+// - nEvent: a FISH_EVENT_* constant matching when the message will be sent. You
+//   can also use your own event numbers, as long as they are > 10.
+// - sKey: a key to identify the proper message to return.
+//   - For the START, NIBBLE, CATCH, NO_NIBBLE, and NO_CATCH events, the key
+//     should be an equipment type.
+//   - The NO_TACKLE event may be either an equipment type or a tackle slot.
+//   - Other events are up to the builder to implement. Key them as you wish.
+//   - If blank, will return a globally defined message for this event.
+//   - Keys will inherit globally defined messages, even if the key has
+//     explicitly defined messages.
+// Example usage:
+// FloatingFishMessage(FISH_EVENT_START, "pole");
+void FloatingFishMessage(int nEvent, string sKey = "");
 
 
 // ----- Public Accessor Functions ---------------------------------------------
@@ -487,6 +581,13 @@ object RemoveFishingTackle(string sSlot, int bReplace, object oEquipment = OBJEC
 // not broadcast sMessage to the PC's faction. You can use this to provide
 // flavor text to your PCs.
 void ActionFloatingTextString(string sMessage);
+
+// ---< ActionFloatingFishMessage >---
+// ---< fish_i_main >---
+// Inserts FloatingFishMessage() into OBJECT_SELF's action queue. Will not
+// broadcast sMessage to the PC's faction. You can use this to provide context-
+// specific flavor text to your PCs.
+void ActionFloatingFishMessage(int nEvent, string sKey = "");
 
 // ---< ActionRemoveFishingTackle >---
 // ---< fish_i_main >---
@@ -554,6 +655,19 @@ int OnFishingTackleUsed(object oEquipment, object oTackle, string sSlot);
 // - OBJECT_SELF: the PC fishing
 int OnFishingStart();
 
+// ---< OnFishRequirements >---
+// ---< fish_c_config >---
+// This is a configurable function that allows you to prevent a fish from
+// performing a nibble check. Use this when there are instances that will always
+// bar a fish from biting. Example uses include making some fish only active at
+// night, during rain, or with certain tackle combinations. For simple
+// environment, equipment, or tackle restrictions, consider using the
+// WhitelistFish*() and BlacklistFish*() functions in OnFishingSetup() instead.
+// - OBJECT_SELF: the PC attempting to catch the fish.
+// - sFish: the resref of the fish whose bite we're testing.
+// Returns: whether or not the fish may attempt to nibble (TRUE/FALSE).
+int OnFishRequirements(string sFish);
+
 // ---< OnFishNibble >---
 // ---< fish_c_config >---
 // This is a configurable function that allows you to modify the chances a type
@@ -594,8 +708,6 @@ int OnFishNibbleSuccess(string sFish);
 // one from a blueprint (to save on palette items), increasing a persistently
 // stored fishing skill, or even just giving the player some XP.
 int OnFishCatch(string sFish);
-
-//string GetFishingMessage(int nEvent, string sKey);
 
 // ---< PlayFishingAnimation >---
 // ---< fish_c_config >---
@@ -910,122 +1022,35 @@ void SetFishingDistance(float fMax, string sEquipmentList = "")
 // ----- Fish Frequency Functions ----------------------------------------------
 
 // Sets the following for each <frequency> and <fish> combination:
-// Name          Type         Purpose
-// "FREQ"        string list  all fish
-// "<fish>FREQ"  int          the unmodified <frequency> at which <fish> appears
+// Name      Type         Purpose
+// ""        string list  all fish
+// "<fish>"  int          the unmodified <frequency> at which <fish> appears
 void AddFish(int nFreq, string sFishList)
 {
     string sFish;
 
-    while (sFishList != "")
+    int i, nCount = CountList(sFishList);
+    for (i = 0; i < nCount; i++)
     {
-        sFish = GetListItem(sFishList);
-        AddListString(Fish.Data, sFish, FISH_FREQ, TRUE);
-        SetLocalInt(Fish.Data, sFish + FISH_FREQ, nFreq);
-        sFishList = DeleteListItem(sFishList);
+        sFish = GetListItem(sFishList, i);
+        if (AddListString(Fish.Data, sFish, "", TRUE))
+            SetLocalInt(Fish.Data, sFish, nFreq);
     }
 }
 
 string GetFish(int nNth)
 {
-    return GetListString(Fish.Data, nNth, FISH_FREQ);
+    return GetListString(Fish.Data, nNth);
 }
 
 int GetFishCount()
 {
-    return CountStringList(Fish.Data, FISH_FREQ);
+    return CountStringList(Fish.Data);
 }
 
 int GetFishFrequency(string sFish)
 {
-    return GetFishInt(FISH_FREQ, sFish);
-}
-
-// Sets the following for each <fish> and <environment> combination:
-// Name         Type         Purpose
-// "<fish>ENV"  string list  a list of all <environment>s where <fish> is found
-void RequireFishEnvironment(string sEnvironmentList, string sFishList)
-{
-    string sFish, sEnvironment, sTempList;
-
-    while (sEnvironmentList != "")
-    {
-        sEnvironment     = GetListItem(sEnvironmentList);
-        sEnvironmentList = DeleteListItem(sEnvironmentList);
-
-        if (sEnvironment == "")
-            continue;
-
-        sTempList = sFishList;
-
-        while (sTempList != "")
-        {
-            sFish = GetListItem(sTempList);
-            sTempList = DeleteListItem(sTempList);
-            AddListString(Fish.Data, sEnvironment, sFish + FISH_ENVIRONMENT, TRUE);
-        }
-
-    }
-}
-
-// Sets the following for each <fish> and <equipment> combination:
-// Name         Type         Purpose
-// "<fish>EQU"  string list  a list of all <equipment> that can catch <fish>
-void RequireFishEquipment(string sEquipmentList, string sFishList)
-{
-    string sFish, sEquipment, sTempList;
-
-    while (sEquipmentList != "")
-    {
-        sEquipment     = GetListItem(sEquipmentList);
-        sEquipmentList = DeleteListItem(sEquipmentList);
-
-        if (sEquipment == "")
-            continue;
-
-        sTempList = sFishList;
-
-        while (sTempList != "")
-        {
-            sFish = GetListItem(sTempList);
-            sTempList = DeleteListItem(sTempList);
-            AddListString(Fish.Data, sEquipment, sFish + FISH_EQUIPMENT, TRUE);
-        }
-
-    }
-}
-
-// Sets the following for each <fish> and <tackle> combination:
-// Name                  Type         Purpose
-// "<fish>TACKLE"        string list  a list of all <tackle> slots that must be
-//                                    filled to catch <fish>
-// "<fish>TACKLE<slot>"  string list  a list of all <tackle> fitting <slot> that
-//                                    can catch <fish>
-void RequireFishTackle(string sTackleList, string sFishList)
-{
-    string sTackle, sSlot, sFish, sTempList;
-    while (sTackleList != "")
-    {
-        sTackle = GetListItem(sTackleList);
-        sTackleList = DeleteListItem(sTackleList);
-
-        if (!GetIsFishingTackle(sTackle))
-            continue;
-
-        sSlot = GetFishingTackleSlot(sTackle);
-        sTempList = sFishList;
-
-        while (sTempList != "")
-        {
-            sFish     = GetListItem(sTempList);
-            sTempList = DeleteListItem(sTempList);
-
-            if (!CountStringList(Fish.Data, sFish + FISH_TACKLE + sSlot))
-                AddListString(Fish.Data, sSlot, sFish + FISH_TACKLE);
-
-            AddListString(Fish.Data, sTackle, sFish + FISH_TACKLE + sSlot);
-        }
-    }
+    return GetLocalInt(Fish.Data, sFish);
 }
 
 // Sets the following for each <modifier> and <fish> combination:
@@ -1033,10 +1058,12 @@ void RequireFishTackle(string sTackleList, string sFishList)
 // "<fish><type><modifier>"  int   value of <modifier> to catch <fish>
 void SetFishModifier(string sType, int nValue, string sModifierList, string sFishList)
 {
-    while (sModifierList != "")
+    string sModifier;
+    int i, nCount = CountList(sModifierList);
+    for (i = 0; i < nCount; i++)
     {
-        SetFishInt(sType + GetListItem(sModifierList), nValue, sFishList);
-        sModifierList = DeleteListItem(sModifierList);
+        sModifier = GetListItem(sModifierList, i);
+        SetFishInt(sType + sModifier, nValue, sFishList);
     }
 }
 
@@ -1085,6 +1112,120 @@ int GetFishTackleModifier(string sTackle, string sFish)
     return GetFishModifier(FISH_TACKLE, sTackle, sFish);
 }
 
+void WhitelistFish(string sType, string sWhitelist, string sFishList)
+{
+    string sFish;
+    int i, nCount = CountList(sFishList);
+    for (i = 0; i < nCount; i++)
+    {
+        sFish = GetListItem(sFishList, i);
+        ExplodeList(Fish.Data, sWhitelist, sType + sFish + FISH_WHITELIST);
+    }
+}
+
+void WhitelistFishEnvironment(string sWhitelist, string sFishList)
+{
+    WhitelistFish(FISH_ENVIRONMENT, sWhitelist, sFishList);
+}
+
+void WhitelistFishEquipment(string sWhitelist, string sFishList)
+{
+    WhitelistFish(FISH_EQUIPMENT, sWhitelist, sFishList);
+}
+
+void WhitelistFishTackleSlot(string sWhitelist, string sFishList)
+{
+    WhitelistFish(FISH_TACKLE_SLOT, sWhitelist, sFishList);
+}
+
+void WhitelistFishTackle(string sWhitelist, string sFishList)
+{
+    string sFish, sTackle, sSlot;
+    int i, nFish = CountList(sFishList);
+    int j, nTackle = CountList(sWhitelist);
+
+    for (i = 0; i < nFish; i++)
+    {
+        sFish = GetListItem(sFishList, i);
+
+        for (j = 0; j < nTackle; j++)
+        {
+            sTackle = GetListItem(sWhitelist, j);
+            sSlot = GetFishingTackleSlot(sTackle);
+            AddListString(Fish.Data, sSlot, FISH_TACKLE_SLOT + sFish + FISH_WHITELIST, TRUE);
+            AddListString(Fish.Data, sTackle, FISH_TACKLE_SLOT + sSlot + sFish + FISH_WHITELIST);
+        }
+    }
+}
+
+void BlacklistFish(string sType, string sBlacklist, string sFishList)
+{
+    string sFish;
+    int i, nCount = CountList(sFishList);
+    for (i = 0; i < nCount; i++)
+    {
+        sFish = GetListItem(sFishList, i);
+        ExplodeList(Fish.Data, sBlacklist, sType + sFish + FISH_BLACKLIST);
+    }
+}
+
+void BlacklistFishEnvironment(string sBlacklist, string sFishList)
+{
+    BlacklistFish(FISH_ENVIRONMENT, sBlacklist, sFishList);
+}
+
+void BlacklistFishEquipment(string sBlacklist, string sFishList)
+{
+    BlacklistFish(FISH_EQUIPMENT, sBlacklist, sFishList);
+}
+
+void BlacklistFishTackleSlot(string sBlacklist, string sFishList)
+{
+    BlacklistFish(FISH_TACKLE_SLOT, sBlacklist, sFishList);
+}
+
+void BlacklistFishTackle(string sBlacklist, string sFishList)
+{
+    string sFish, sTackle, sSlot;
+    int i, nFish = CountList(sFishList);
+    int j, nTackle = CountList(sBlacklist);
+
+    for (i = 0; i < nFish; i++)
+    {
+        sFish = GetListItem(sFishList, i);
+
+        for (j = 0; j < nTackle; j++)
+        {
+            sTackle = GetListItem(sBlacklist, j);
+            sSlot = GetFishingTackleSlot(sTackle);
+            AddListString(Fish.Data, sTackle, FISH_TACKLE_SLOT + sSlot + sFish + FISH_BLACKLIST);
+        }
+    }
+}
+
+int HasFishWhitelist(string sType, string sFish)
+{
+    return (CountStringList(Fish.Data, sType + sFish + FISH_WHITELIST) != 0);
+}
+
+int InFishWhitelist(string sType, string sItem, string sFish)
+{
+    return HasListString(Fish.Data, sItem, sType + sFish + FISH_WHITELIST);
+}
+
+int HasFishBlacklist(string sType, string sFish)
+{
+    return (CountStringList(Fish.Data, sType + sFish + FISH_BLACKLIST) != 0);
+}
+
+int InFishBlacklist(string sType, string sItem, string sFish)
+{
+    return HasListString(Fish.Data, sItem, sType + sFish + FISH_BLACKLIST);
+}
+
+
+// ----- Fishing Message Functions ---------------------------------------------
+
 // Sets the following each run
 // Name                 Type         Purpose
 // "<key>MSG(<event>)"  string list  messages for <key> during <event>
@@ -1104,19 +1245,29 @@ void AddFishMessage(int nEvent, string sKeyList, string sMessage)
         AddListString(Fish.Data, sMessage, sListName);
 }
 
-string GetFishMessage(int nEvent, string sKey)
+string GetFishMessage(int nEvent, string sKey = "")
 {
     string sListName = FISH_MESSAGE + "(" + IntToString(nEvent) +  ")";
 
-    // Pick a random message from either the global or local message lists.
-    int nLocalCount  = CountStringList(Fish.Data, sKey + sListName);
+    // If we have no key, get a random message from the global list
     int nGlobalCount = CountStringList(Fish.Data, sListName);
-    int nIndex       = Random(nLocalCount + nGlobalCount);
+    if (sKey == "")
+        return GetListString(Fish.Data, Random(nGlobalCount), sListName);
+
+    // Pick a random message from either the global or local message lists.
+    int nLocalCount = CountStringList(Fish.Data, sKey + sListName);
+    int nIndex      = Random(nLocalCount + nGlobalCount);
 
     if (nIndex < nLocalCount)
         return GetListString(Fish.Data, nIndex, sKey + sListName);
     else
         return GetListString(Fish.Data, nIndex - nLocalCount, sListName);
+}
+
+void FloatingFishMessage(int nEvent, string sKey = "")
+{
+    string sMessage = GetFishMessage(nEvent, sKey);
+    FloatingTextStringOnCreature(sMessage, Fish.PC, FALSE);
 }
 
 
@@ -1223,6 +1374,11 @@ void ActionFloatingTextString(string sMessage)
     ActionDoCommand(FloatingTextStringOnCreature(sMessage, Fish.PC, FALSE));
 }
 
+void ActionFloatingFishMessage(int nEvent, string sKey = "")
+{
+    ActionDoCommand(FloatingFishMessage(nEvent, sKey));
+}
+
 void ActionRemoveFishingTackle(string sTackle, int bReplace)
 {
     ActionDoCommand(ObjectToAction(RemoveFishingTackle(sTackle, bReplace)));
@@ -1287,8 +1443,7 @@ int HandleFishingTackle(object oEquipment)
                     || !OnFishingTackleUsed(oEquipment, Fish.Item, sSlot))
     {
         // The tackle was not used on the correct type of item. Notify the PC.
-        string sMessage = GetFishMessage(FISH_EVENT_BAD_TARGET, Fish.Type);
-        FloatingTextStringOnCreature(sMessage, Fish.PC, FALSE);
+        FloatingFishMessage(FISH_EVENT_BAD_TARGET, Fish.Type);
         return TRUE;
     }
 
@@ -1303,9 +1458,7 @@ int HandleFishingTackle(object oEquipment)
     BuildFishingEquipmentDescription(oEquipment);
 
     // Get the appropriate message and send it to the PC.
-    string sMessage = GetFishMessage(FISH_EVENT_USE_TACKLE, Fish.Type);
-    FloatingTextStringOnCreature(sMessage, Fish.PC, FALSE);
-
+    FloatingFishMessage(FISH_EVENT_USE_TACKLE, Fish.Type);
     return TRUE;
 }
 
@@ -1321,8 +1474,8 @@ int VerifyFishingTackle()
         {
             // Notify the PC that he needs the proper tackle. Send a message for
             // the equipment and for the tackle.
-            FloatingTextStringOnCreature(GetFishMessage(FISH_EVENT_NO_TACKLE, Fish.Type), Fish.PC, FALSE);
-            FloatingTextStringOnCreature(GetFishMessage(FISH_EVENT_NO_TACKLE, sSlot),     Fish.PC, FALSE);
+            FloatingFishMessage(FISH_EVENT_NO_TACKLE, Fish.Type);
+            FloatingFishMessage(FISH_EVENT_NO_TACKLE, sSlot);
             return FALSE;
         }
     }
@@ -1348,73 +1501,163 @@ int VerifyFishingSpot()
 
         // Use non-trigger fishing spots only if there is no max distance or we
         // are in range of it.
-        if (bNoMax || GetDistanceBetween(Fish.PC, Fish.Spot) <= fMax)
+        if (GetObjectType(Fish.Spot) != OBJECT_TYPE_TRIGGER &&
+           (bNoMax || GetDistanceBetween(Fish.PC, Fish.Spot) <= fMax))
             return TRUE;
 
         Fish.Spot = GetNearestObjectByTag(FISH_WP_FISHING, Fish.PC, ++i);
     }
 
     // No fishing spot was found, so notify the PC.
-    string sMessage = GetFishMessage(FISH_EVENT_NO_SPOT, Fish.Type);
-    FloatingTextStringOnCreature(sMessage, Fish.PC, FALSE);
+    FloatingFishMessage(FISH_EVENT_NO_SPOT, Fish.Type);
     return FALSE;
 }
 
 void ActionFishEvent(int nEvent)
 {
-    ActionFloatingTextString(GetFishMessage(nEvent, Fish.Type));
+    ActionFloatingFishMessage(nEvent, Fish.Type);
     PlayFishingAnimation(nEvent);
 }
 
-// Private function for ActionFish(). Returns an error message if sFish cannot
-// be caught in the current environment or using the given equipment and tackle.
-string CheckFishRequirements(string sFish)
+// Private function for CheckFishRequirements(). Returns whether sFish can be
+// caught in the current environment.
+int CheckFishEquipment(string sFish)
 {
-    // If the fish has required equipment, are we using it?
-    if (CountStringList(Fish.Data, sFish + FISH_EQUIPMENT) &&
-        HasListString(Fish.Data, Fish.Type, sFish + FISH_EQUIPMENT))
-        return "  " + sFish + " cannot be caught using equipment: " + Fish.Type;
-
-    // If the fish has a required environment, are we in it?
-    if (CountStringList(Fish.Data, sFish + FISH_ENVIRONMENT))
+    if (InFishBlacklist(FISH_EQUIPMENT, Fish.Type, sFish))
     {
-        // In case we've combined environments, check all in the list.
-        string sEnvList = Fish.Environment;
-        while (sEnvList != "")
-        {
-            if (HasListString(Fish.Data, GetListItem(sEnvList), sFish + FISH_ENVIRONMENT))
-                break;
+        FishingDebug("  " + Fish.Type + " was found in the equipment blacklist.");
+        return FALSE;
+    }
 
-            DeleteListItem(sEnvList);
+    if (HasFishWhitelist(FISH_EQUIPMENT, sFish))
+    {
+        if (!InFishWhitelist(FISH_EQUIPMENT, Fish.Type, sFish))
+        {
+            FishingDebug("  " + Fish.Type + " was not found in the equipment whitelist.");
+            return FALSE;
         }
 
-        if (sEnvList == "")
-            return "  " + sFish + " cannot be caught in environment: " + Fish.Environment;
+        FishingDebug("  " + Fish.Type + " was found in the equipment whitelist.");
     }
 
-    // If the fish has required tackle, are we using it?
-    string sSlot, sTackle;
-    int i, nCount = CountStringList(Fish.Data, sFish + FISH_TACKLE);
+    return TRUE;
+}
+
+// Private function for CheckFishRequirements(). Returns whether sFish can be
+// caught in the current environment.
+int CheckFishEnvironment(string sFish)
+{
+    int bWhite = HasFishWhitelist(FISH_ENVIRONMENT, sFish);
+    int bBlack = HasFishBlacklist(FISH_ENVIRONMENT, sFish);
+
+    // Abort if the fish does not have a whitelist or blacklist of this type.
+    if (!bWhite && !bBlack)
+        return TRUE;
+
+    string sEnvironment;
+    int i, bAny, nCount = CountList(Fish.Environment);
     for (i = 0; i < nCount; i++)
     {
-        sSlot = GetListString(Fish.Data, i, sFish + FISH_TACKLE);
+        sEnvironment = GetListItem(Fish.Environment, i);
 
-        // If this slot is not supported by our equipment, the PC should still
-        // be able to catch the fish without it.
-        if (!HasFishingTackleSlot(Fish.Type, sSlot))
-            continue;
+        // If the environment is in the blacklist, abort.
+        if (bBlack && InFishBlacklist(FISH_ENVIRONMENT, sEnvironment, sFish))
+        {
+            FishingDebug("  " + sEnvironment + " was found in the environment blacklist.");
+            return FALSE;
+        }
 
-        // Does the tackle in this slot match one in the required list?
-        sTackle = GetFishingTackle(sSlot, Fish.Item);
-        if (!HasListString(Fish.Data, sTackle, sFish + FISH_TACKLE + sSlot))
-            break;
+        // Only check the whitelist if we have one and have not already found a
+        // whitelisted environment.
+        if (!bAny && bWhite && InFishWhitelist(FISH_ENVIRONMENT, sEnvironment, sFish))
+        {
+            FishingDebug("  " + sEnvironment + " was found in the environment whitelist.");
+            bAny = TRUE;
+        }
     }
 
-    // If we broke out early, we didn't have a required piece of tackle;
-    if (i < nCount)
-        return "  " + sFish + " cannot be caught using tackle: " + sTackle;
-    else
-        return "";
+    // Return if there was a whitelist an any of our environments were in it.
+    if (bWhite)
+    {
+        if (bAny)
+            return TRUE;
+
+        FishingDebug("  No environment in " + Fish.Environment + " was found in the environment whitelist.");
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+// Private function for CheckFishRequirements(). Returns whether sFish can be
+// caught using the equipped tackle slots.
+int CheckFishTackleSlots(string sFish)
+{
+    string sSlot, sTackle;
+    int i, nCount = CountList(Fish.Full);
+
+    // Iterate through the full slots and see if any are in the blacklist.
+    for (i = 0; i < nCount; i++)
+    {
+        sSlot = GetListItem(Fish.Full, i);
+        if (InFishBlacklist(FISH_TACKLE_SLOT, sSlot, sFish))
+        {
+            FishingDebug("  " + sSlot + " was full and found in the slot blacklist.");
+            return FALSE;
+        }
+
+        sTackle = GetFishingTackle(sSlot, Fish.Item);
+        if (InFishBlacklist(FISH_TACKLE_SLOT + sSlot, sTackle, sFish))
+        {
+            FishingDebug("  " + sTackle + " was found in the tackle blacklist.");
+            return FALSE;
+        }
+
+        if (HasFishWhitelist(FISH_TACKLE + sSlot, sFish) &&
+            !InFishWhitelist(FISH_TACKLE + sSlot, sTackle, sFish))
+        {
+            FishingDebug("  " + sTackle + " was not found in the tackle whitelist for slot " + sSlot + ".");
+            return FALSE;
+        }
+    }
+
+    // Iterate through the empty slots and see if any are in the whitelist.
+    if (HasFishWhitelist(FISH_TACKLE_SLOT, sFish))
+    {
+        nCount = CountList(Fish.Empty);
+        for (i = 0; i < nCount; i++)
+        {
+            sSlot = GetListItem(Fish.Empty, i);
+            if (InFishWhitelist(FISH_TACKLE_SLOT, sSlot, sFish))
+            {
+                FishingDebug("  " + sSlot + " was empty and found in the slot whitelist.");
+                return FALSE;
+            }
+        }
+    }
+
+    // No full slots were blacklisted, and no empty slots were whitelisted.
+    return TRUE;
+}
+
+// Private Function for ActionFish(). Returns an error message if sFish cannot
+// be caught in the given environment or with the given equipment, tackle slots,
+// or tackle.
+string CheckFishRequirements(string sFish)
+{
+    if (!CheckFishEquipment(sFish))
+        return "  Skipping " + sFish + ": fish cannot be caught with equipment " + Fish.Type;
+
+    if (!CheckFishEnvironment(sFish))
+        return "  Skipping " + sFish + ": fish cannot be caught with environment " + Fish.Environment;
+
+    if (!CheckFishTackleSlots(sFish))
+        return "  Skipping " + sFish + ": fish cannot be caught with tackle " + Fish.Tackle;
+
+    if (!OnFishRequirements(sFish))
+        return "  Skipping " + sFish + ": fish failed OnFishRequirements() check";
+
+    return "";
 }
 
 void ActionFish()
@@ -1424,6 +1667,18 @@ void ActionFish()
 
     // Load our tackle
     Fish.Tackle = GetFishingTackle("", Fish.Item);
+
+    // Load our tackle slots
+    string sSlot, sSlots = GetFishingTackleSlots(Fish.Type);
+    int i, nSlots = CountList(sSlots);
+    for (i = 0; i < nSlots; i++)
+    {
+        sSlot = GetListItem(sSlots, i);
+        if (GetFishingTackle(sSlot, Fish.Item) == "")
+            Fish.Empty = AddListItem(Fish.Empty, sSlot);
+        else
+            Fish.Full = AddListItem(Fish.Full, sSlot);
+    }
 
     // Run the config function to see if we're allowed to fish.
     if (!OnFishingStart()) return;
@@ -1436,8 +1691,8 @@ void ActionFish()
 
     // Test for a nibble
     float  fChance = 1.0;
-    string sFish, sEnvironment, sTackle, sSlot, sMessage;
-    int i, n, nFreq, nMod, nChance, nTemp;
+    string sFish, sEnvironment, sTackle, sMessage;
+    int n, nFreq, nMod, nChance, nTemp;
 
     int nTackle       = CountList(Fish.Tackle);
     int nEnvironments = CountList(Fish.Environment);
@@ -1452,9 +1707,11 @@ void ActionFish()
         sFish = GetFish((nStart + i) % nCount);
         FishingDebug("\nTrying to catch a " + sFish);
 
+        // Check the requirements for this fish
         sMessage = CheckFishRequirements(sFish);
         if (sMessage != "")
         {
+            // If we got an error message, show it and move to the next fish.
             FishingDebug(sMessage);
             continue;
         }
@@ -1499,7 +1756,10 @@ void ActionFish()
                      "% chance of catching this fish.");
 
         // Check whether the fish bites.
-        if (Random(100) < nChance)
+        int nRoll = Random(100);
+        FishingDebug("Rolled a " +  IntToString(nRoll));
+
+        if (nRoll < nChance)
         {
             FishingDebug("Success! Checking if we can reel in the " + sFish);
 

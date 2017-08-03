@@ -51,38 +51,46 @@ void OnFishingSetup()
     SetFishingDistance(10.0, "pole");
 
     SetIsFishingTackle("worm", "bait");
+    SetIsFishingTackle("hook_large", "hook");
     SetIsFishingTackle("bait, float, hook, line, sinker");
 
-    SetFishingTackleSlots("pole", "bait", "float, hook, line, sinker");
+    SetFishingTackleSlots("pole", "hook", "bait, float, line, sinker");
 
 
     // ----- Fish Definitions --------------------------------------------------
 
-    //AddFish(20, "trout, bass");
+    AddFish(20, "trout, bass");
 
 
     // ----- Environment Definitions -------------------------------------------
 
-    //SetFishEnvironmentModifier(0, "freshwater", "trout, bass");
-    //SetFishEnvironmentModifier(10, "pond, river", "trout");
+    BlacklistFishEnvironment("lake", "trout");
+
+    SetFishEnvironmentModifier(10, "pond, river", "trout");
+    SetFishEnvironmentModifier(10, "lake", "bass");
 
 
     // ----- Equipment Definitions ---------------------------------------------
 
-    //SetFishEquipmentModifier(0, "trout", "pole");
+    BlacklistFishEquipment("spear", "bass");
 
 
     // ----- Tackle Definitions ------------------------------------------------
 
-    //SetFishTackleModifier(-10, "hook_large", "trout");
-    //SetFishTackleModifier(10, "hook_large", "bass");
+    BlacklistFishTackle("hook_large", "trout");
+    WhitelistFishTackleSlot("bait", "bass");
+
+    SetFishTackleModifier(-10, "hook_large", "bass");
+    SetFishTackleSlotModifier(10, "bait", "");
+
 
     // ----- Event Messages-----------------------------------------------------
 
     AddFishMessage(FISH_EVENT_NO_SPOT,    "", "This doesn't look like a good place to fish.");
     AddFishMessage(FISH_EVENT_BAD_TARGET, "", "You can't use this item on that target.");
+    AddFishMessage(FISH_EVENT_USE_TACKLE, "", "You apply the tackle to your equipment.");
 
-    AddFishMessage(FISH_EVENT_NO_TACKLE, "bait", "You need bait to fish with this equipment.");
+    AddFishMessage(FISH_EVENT_NO_TACKLE,  "pole", "You need a hook to fish with this equipment.");
 
     AddFishMessage(FISH_EVENT_START,     "pole", "You cast your line. Now to wait...");
     AddFishMessage(FISH_EVENT_NIBBLE,    "pole", "You feel a tug on your line!");
@@ -134,6 +142,20 @@ int OnFishingTackleUsed(object oEquipment, object oTackle, string sSlot)
 // limit between fish bites.
 // - OBJECT_SELF: the PC fishing
 int OnFishingStart()
+{
+    return TRUE;
+}
+
+// This is a configurable function that allows you to prevent a fish from
+// performing a nibble check. Use this when there are instances that will always
+// bar a fish from biting. Example uses include making some fish only active at
+// night, during rain, or with certain tackle combinations. For simple
+// environment, equipment, or tackle restrictions, consider using the
+// WhitelistFish*() and BlacklistFish*() functions in OnFishingSetup() instead.
+// - OBJECT_SELF: the PC attempting to catch the fish.
+// - sFish: the resref of the fish whose bite we're testing.
+// Returns: whether or not the fish may attempt to nibble (TRUE/FALSE).
+int OnFishRequirements(string sFish)
 {
     return TRUE;
 }
