@@ -209,41 +209,14 @@ int OnFishCatch(string sFish)
 }
 
 // This is a configurable function to handle the animations for different stages
-// of the fishing. nEvent is the fishing event which is currently playing:
-// FISH_EVENT_START: plays when fishing begins (after OnFishingStart())
-// FISH_EVENT_NIBBLE: plays when a fish has passed the nibble check
-// FISH_EVENT_CATCH: plays when a PC successfully catches a fish
-// FISH_EVENT_NO_CATCH: plays when a fish nibbled but was not caught
-// FISH_EVENT_NO_NIBBLE: plays when no fish nibbled at all
-void PlayFishingAnimation(int nEvent)
+// of the fishing. Returns whether or not to play the default animation.
+// - nEvent: the fishing event which is currently playing
+//   - FISH_EVENT_START: plays when fishing begins (after OnFishingStart())
+//   - FISH_EVENT_NIBBLE: plays when a fish has passed the nibble check
+//   - FISH_EVENT_CATCH: plays when a PC successfully catches a fish
+//   - FISH_EVENT_NO_CATCH: plays when a fish nibbled but was not caught
+//   - FISH_EVENT_NO_NIBBLE: plays when no fish nibbled at all
+int PlayFishingAnimation(int nEvent)
 {
-    switch (nEvent)
-    {
-        case FISH_EVENT_START:
-            PlaySound("as_na_splash1");
-            ActionPlayAnimation(ANIMATION_LOOPING_LISTEN, 1.0, IntToFloat(Random(6) + 4));
-            break;
-
-        case FISH_EVENT_NIBBLE:
-            ActionWait(1.0f);
-            ActionPlayAnimation(ANIMATION_LOOPING_SPASM, 0.1, 6.0);
-            ActionPlayAnimation(ANIMATION_FIREFORGET_SALUTE);
-            ActionWait(1.0f);
-            break;
-
-        case FISH_EVENT_CATCH:
-            PlaySound("as_na_splash2");
-            ActionPlayAnimation(ANIMATION_FIREFORGET_VICTORY1);
-            break;
-
-        case FISH_EVENT_NO_CATCH:
-            PlaySound("as_na_splash2");
-            ActionPlayAnimation(ANIMATION_FIREFORGET_TAUNT);
-            break;
-
-        case FISH_EVENT_NO_NIBBLE:
-            ActionPlayAnimation(ANIMATION_FIREFORGET_PAUSE_BORED);
-            break;
-
-    }
+    return TRUE;
 }
