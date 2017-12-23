@@ -445,6 +445,11 @@ void BlacklistFishTackleSlot(string sBlacklist, string sFishList);
 // found in sBlacklist.
 void BlacklistFishTackle(string sBlacklist, string sFishList);
 
+// ---< GetFishWhitelist >---
+// ---< fish_i_main >---
+// Returns the whitelist for sFish. sType is a key to access the correct list.
+string GetFishWhitelist(string sType, string sFish);
+
 // ---< HasFishWhitelist >---
 // ---< fish_i_main >---
 // Returns whether a whitelist exists for sFish of type sType. sType is a key to
@@ -456,6 +461,11 @@ int HasFishWhitelist(string sType, string sFish);
 // Returns whether sFish's whitelist of type sType contains sItem. sType is a
 // key to access the correct list of conditions.
 int InFishWhitelist(string sType, string sItem, string sFish);
+
+// ---< GetFishBlacklist >---
+// ---< fish_i_main >---
+// Returns the blacklist for sFish. sType is a key to access the correct list.
+string GetFishBlacklist(string sType, string sFish);
 
 // ---< HasFishBlacklist >---
 // ---< fish_i_main >---
@@ -1115,12 +1125,25 @@ int GetFishTackleModifier(string sTackle, string sFish)
 
 void WhitelistFish(string sType, string sWhitelist, string sFishList)
 {
-    string sFish;
-    int i, nCount = CountList(sFishList);
-    for (i = 0; i < nCount; i++)
+    string sFish, sVarName, sWhite, sList;
+    int i, nFish = CountList(sFishList);
+    int j, nWhite = CountList(sWhitelist);
+
+    for (i = 0; i < nFish; i++)
     {
         sFish = GetListItem(sFishList, i);
-        ExplodeList(Fish.Data, sWhitelist, sType + sFish + FISH_WHITELIST);
+        sVarName = sType + sFish + FISH_WHITELIST;
+        sList = GetLocalString(Fish.Data, sVarName);
+        sList = MergeLists(sList, sWhitelist);
+        SetLocalString(Fish.Data, sVarName, sList);
+
+        // Store whether the item is in the whitelist so we don't have to search
+        for (j = 0; j < nWhite; j++)
+        {
+            sWhite = GetListItem(sWhitelist, j);
+            FishingDebug("Adding " + sWhite + " to " + sFish + "'s " + GetStringLowerCase(sType) + " whitelist.");
+            SetLocalInt(Fish.Data, sVarName + sWhite, TRUE);
+        }
     }
 }
 
@@ -1141,7 +1164,7 @@ void WhitelistFishTackleSlot(string sWhitelist, string sFishList)
 
 void WhitelistFishTackle(string sWhitelist, string sFishList)
 {
-    string sFish, sTackle, sSlot;
+    string sFish, sTackle, sSlot, sVarName, sList;
     int i, nFish = CountList(sFishList);
     int j, nTackle = CountList(sWhitelist);
 
@@ -1151,22 +1174,52 @@ void WhitelistFishTackle(string sWhitelist, string sFishList)
 
         for (j = 0; j < nTackle; j++)
         {
+            sVarName = FISH_TACKLE_SLOT + sFish + FISH_WHITELIST;
             sTackle = GetListItem(sWhitelist, j);
+
+            // Add the tackle's slot to the slot whitelist so this tackle won't
+            // be refused because of its slot.
             sSlot = GetFishingTackleSlot(sTackle);
-            AddListString(Fish.Data, sSlot, FISH_TACKLE_SLOT + sFish + FISH_WHITELIST, TRUE);
-            AddListString(Fish.Data, sTackle, FISH_TACKLE_SLOT + sSlot + sFish + FISH_WHITELIST);
+            sList = GetLocalString(Fish.Data, sVarName);
+            if (!HasListItem(sList, sSlot))
+            {
+                sList = AddListItem(sWhitelist, sSlot);
+                SetLocalString(Fish.Data, sVarName, sList);
+                SetLocalInt(Fish.Data, sVarName + sSlot, TRUE);
+                FishingDebug("Adding " + sSlot + " to " + sFish + "'s tackle slot whitelist.");
+            }
+
+            // Add the tackle to its own whitelist
+            sVarName = FISH_TACKLE + sSlot + sFish + FISH_WHITELIST;
+            sList = GetLocalString(Fish.Data, sVarName);
+            sList = AddListItem(sList, sTackle);
+            SetLocalString(Fish.Data, sVarName, sList);
+            SetLocalInt(Fish.Data, sVarName + sTackle, TRUE);
+            FishingDebug("Adding " + sTackle + " to " + sFish + "'s tackle whitelist.");
         }
     }
 }
 
 void BlacklistFish(string sType, string sBlacklist, string sFishList)
 {
-    string sFish;
-    int i, nCount = CountList(sFishList);
-    for (i = 0; i < nCount; i++)
+    string sFish, sVarName, sBlack, sList;
+    int i, nFish = CountList(sFishList);
+    int j, nBlack = CountList(sBlacklist);
+    for (i = 0; i < nFish; i++)
     {
         sFish = GetListItem(sFishList, i);
-        ExplodeList(Fish.Data, sBlacklist, sType + sFish + FISH_BLACKLIST);
+        sVarName = sType + sFish + FISH_BLACKLIST;
+        sList = GetLocalString(Fish.Data, sVarName);
+        sList = MergeLists(sList, sBlacklist);
+        SetLocalString(Fish.Data, sVarName, sList);
+
+        // Store whether the item is in the blacklist so we don't have to search
+        for (j = 0; j < nBlack; j++)
+        {
+            sBlack = GetListItem(sBlacklist, j);
+            FishingDebug("Adding " + sBlack + " to " + sFish + "'s blacklist.");
+            SetLocalInt(Fish.Data, sVarName + sBlack, TRUE);
+        }
     }
 }
 
@@ -1187,7 +1240,7 @@ void BlacklistFishTackleSlot(string sBlacklist, string sFishList)
 
 void BlacklistFishTackle(string sBlacklist, string sFishList)
 {
-    string sFish, sTackle, sSlot;
+    string sFish, sTackle, sSlot, sVarName, sList;
     int i, nFish = CountList(sFishList);
     int j, nTackle = CountList(sBlacklist);
 
@@ -1199,29 +1252,44 @@ void BlacklistFishTackle(string sBlacklist, string sFishList)
         {
             sTackle = GetListItem(sBlacklist, j);
             sSlot = GetFishingTackleSlot(sTackle);
-            AddListString(Fish.Data, sTackle, FISH_TACKLE_SLOT + sSlot + sFish + FISH_BLACKLIST);
+            sVarName = FISH_TACKLE + sSlot + sFish + FISH_BLACKLIST;
+            sList = GetLocalString(Fish.Data, sVarName);
+            sList = AddListItem(sList, sTackle);
+            SetLocalString(Fish.Data, sVarName, sList);
+            SetLocalInt(Fish.Data, sVarName + sTackle, TRUE);
+            FishingDebug("Adding " + sTackle + " to " + sFish + "'s tackle blacklist.");
         }
     }
 }
 
+string GetFishWhitelist(string sType, string sFish)
+{
+    return GetLocalString(Fish.Data, sType + sFish + FISH_WHITELIST);
+}
+
 int HasFishWhitelist(string sType, string sFish)
 {
-    return (CountStringList(Fish.Data, sType + sFish + FISH_WHITELIST) != 0);
+    return (GetFishWhitelist(sType, sFish) != "");
 }
 
 int InFishWhitelist(string sType, string sItem, string sFish)
 {
-    return HasListString(Fish.Data, sItem, sType + sFish + FISH_WHITELIST);
+    return GetLocalInt(Fish.Data, sType + sFish + FISH_WHITELIST + sItem);
+}
+
+string GetFishBlacklist(string sType, string sFish)
+{
+    return GetLocalString(Fish.Data, sType + sFish + FISH_BLACKLIST);
 }
 
 int HasFishBlacklist(string sType, string sFish)
 {
-    return (CountStringList(Fish.Data, sType + sFish + FISH_BLACKLIST) != 0);
+    return (GetFishBlacklist(sType, sFish) != "");
 }
 
 int InFishBlacklist(string sType, string sItem, string sFish)
 {
-    return HasListString(Fish.Data, sItem, sType + sFish + FISH_BLACKLIST);
+    return GetLocalInt(Fish.Data, sType + sFish + FISH_BLACKLIST + sItem);
 }
 
 
@@ -1555,7 +1623,7 @@ void ActionFishEvent(int nEvent)
 }
 
 // Private function for CheckFishRequirements(). Returns whether sFish can be
-// caught in the current environment.
+// caught using the current equipment.
 int CheckFishEquipment(string sFish)
 {
     if (InFishBlacklist(FISH_EQUIPMENT, Fish.Type, sFish))
@@ -1642,7 +1710,7 @@ int CheckFishTackleSlots(string sFish)
         }
 
         sTackle = GetFishingTackle(sSlot, Fish.Item);
-        if (InFishBlacklist(FISH_TACKLE_SLOT + sSlot, sTackle, sFish))
+        if (InFishBlacklist(FISH_TACKLE + sSlot, sTackle, sFish))
         {
             FishingDebug("  " + sTackle + " was found in the tackle blacklist.");
             return FALSE;
