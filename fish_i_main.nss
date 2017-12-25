@@ -42,9 +42,9 @@ const string FISH_MESSAGE         = "MSG";
 const string FISH_NAME            = "NAME";
 const string FISH_RESREF          = "RESREF";
 const string FISH_TACKLE          = "TACKLE";
-const string FISH_TACKLE_SLOT     = "SLOT";
+const string FISH_TACKLE_ALLOWED  = "ALLOWED";
 const string FISH_TACKLE_REQUIRED = "REQUIRED";
-const string FISH_TACKLE_OPTIONAL = "OPTIONAL";
+const string FISH_TACKLE_SLOT     = "SLOT";
 const string FISH_TAG             = "TAG";
 const string FISH_WHITELIST       = "WHITELIST";
 
@@ -165,16 +165,15 @@ void FishingDebug(string sMessage);
 
 // ----- Fishing Equipment and Tackle Functions --------------------------------
 
-// ---< SetFishingTackleSlots >---
+// ---< AddFishingTackleSlot >---
 // ---< fish_i_main >---
-// Defines the required and optional tackle slots for a list of equipment types.
-// Tackle that doesn't match one of these slots can't be used on the equipment.
-// Parameters:
-// - sEquipmentList: a comma-separated list of equipment types
-// - sRequiredTackle: a comma-separated list of tackle slots that must be filled
-//   for the equipment to be successfully used
-// - sOptionalTackle: a comma-separated list of tackle slots that the equipment
-//   has but are not required for the equipment to be used
+// Defines the tackle slot sSlot as being found on equipment type sEquipment.
+// Tackle that fits into sSlot can be used on sEquipment. if bRequired is TRUE,
+// sSlot must be filled with matching tackle for the equipment to be used.
+//
+// This function can be called multiple times for a given equipment type,
+// defining a new slot each time. For bulk usage, however, consider using
+// AddFishingTackleSlots() instead.
 //
 // You can create your own types of equipment:
 // 1. Give your item a "Cast Spell: OnActivate (Self Only)" item property with
@@ -183,7 +182,28 @@ void FishingDebug(string sMessage);
 //    item is. Alternatively, set the tag to "fish_t_equipment" and use the
 //    resref as the equipment type. This will be the value you should use to
 //    refer to your equipment type in this setting and in the config functions.
-void SetFishingTackleSlots(string sEquipmentList, string sRequiredTackle = "", string sOptionalTackle = "");
+void AddFishingTackleSlot(string sEquipment, string sSlot, int bRequired = FALSE);
+
+// ---< AddFishingTackleSlots >---
+// ---< fish_i_main >---
+// Defines the required and optional tackle slots for a list of equipment types.
+// Tackle that doesn't match one of these slots can't be used on the equipment.
+// Parameters:
+// - sEquipmentList: a comma-separated list of equipment types
+// - sSlotList: a comma-separated list of tackle slots that the equipment has
+//   but are not required for the equipment to be used.
+// - sRequiredSlotList: a comma-separated list of tackle slots that must be
+//   filled for the equipment to be successfully used. If a slot is defined both
+//   here and in sSlotList, this one takes precedence.
+//
+// You can create your own types of equipment:
+// 1. Give your item a "Cast Spell: OnActivate (Self Only)" item property with
+//    unlimited uses.
+// 2. Set its tag to "fish_t_equipment_*", where * is the type of equipment your
+//    item is. Alternatively, set the tag to "fish_t_equipment" and use the
+//    resref as the equipment type. This will be the value you should use to
+//    refer to your equipment type in this setting and in the config functions.
+void AddFishingTackleSlots(string sEquipmentList, string sSlotList, string sRequiredSlotList = "");
 
 // ---< GetFishingTackleSlots >---
 // ---< fish_i_main >---
@@ -921,23 +941,78 @@ void FishingDebug(string sMessage)
 
 // ----- Fishing Equipment and Tackle Functions --------------------------------
 
-void SetFishingTackleSlots(string sEquipmentList, string sRequiredTackle = "", string sOptionalTackle = "")
+// Sets the following for each <tackle> and <slot> combination:
+// Name                       Type      Purpose
+// <equipment>ALLOWED<slot>   int       whether <slot> is a tackle slot used by <equipment>
+// <equipment>REQUIRED<slot>  int       whether <slot> is a tackle slot required by <equipment>
+// <equipment>ALLOWED         CSV list  all tackle slots used by <equipment>
+// <equipment>REQUIRED        CSV list  all tackle slots required by <equipment>
+void AddFishingTackleSlot(string sEquipment, string sSlot, int bRequired = FALSE)
+{
+    if (sEquipment == "" || sSlot == "")
+        return;
+
+    // Prevent adding the slot multiple times
+    int bAdded = GetLocalInt(Fish.Data, sEquipment + FISH_TACKLE_ALLOWED + sSlot);
+    if (bAdded && (!bRequired || GetLocalInt(Fish.Data, sEquipment + FISH_TACKLE_REQUIRED + sSlot)))
+        return;
+
+    FishingDebug("Adding tackle slot " + sSlot + " to " + sEquipment + "'s " +
+                 (bRequired ? "required" : "optional") + " tackle list");
+
+    if (!bAdded)
+    {
+        // Add the slot to a master list for the equipment
+        AddLocalListItem(Fish.Data, sEquipment + FISH_TACKLE_ALLOWED, sSlot);
+        SetLocalInt(Fish.Data, sEquipment + FISH_TACKLE_ALLOWED + sSlot, TRUE);
+    }
+
+    // Slots that were already added can still be upgraded to required
+    if (bRequired)
+    {
+        // Add the slot to a list of required slots for the equipment
+        AddLocalListItem(Fish.Data, sEquipment + FISH_TACKLE_REQUIRED, sSlot);
+        SetLocalInt(Fish.Data, sEquipment + FISH_TACKLE_REQUIRED + sSlot, TRUE);
+    }
+}
+
+void AddFishingTackleSlots(string sEquipmentList, string sSlotList, string sRequiredSlotList = "")
 {
     // Sanity check
     if (sEquipmentList == "") return;
 
-    SetFishString(FISH_TACKLE_REQUIRED, sRequiredTackle, sEquipmentList);
-    SetFishString(FISH_TACKLE_OPTIONAL, sOptionalTackle, sEquipmentList);
+    string sEquipment, sSlot;
+    int i, nEquipment = CountList(sEquipmentList);
+    int j, nRequired  = CountList(sRequiredSlotList);
+    int    nSlot      = CountList(sSlotList);
+
+
+    for (i = 0; i < nEquipment; i++)
+    {
+        sEquipment = GetListItem(sEquipmentList);
+        if (sEquipment == "")
+            continue;
+
+        for (j = 0; j < nRequired; j++)
+        {
+            sSlot = GetListItem(sRequiredSlotList, j);
+            AddFishingTackleSlot(sEquipment, sSlot, TRUE);
+        }
+
+        for (j = 0; j < nSlot; j++)
+        {
+            sSlot = GetListItem(sSlotList, j);
+            AddFishingTackleSlot(sEquipment, sSlot, FALSE);
+        }
+    }
 }
 
 string GetFishingTackleSlots(string sEquipment, int bRequiredOnly = FALSE)
 {
     if (bRequiredOnly)
-        return GetFishString(FISH_TACKLE_REQUIRED, sEquipment);
+        return GetLocalString(Fish.Data, sEquipment + FISH_TACKLE_REQUIRED);
 
-    string sRequired = GetFishString(FISH_TACKLE_REQUIRED, sEquipment);
-    string sOptional = GetFishString(FISH_TACKLE_OPTIONAL, sEquipment);
-    return MergeLists(sRequired, sOptional);
+    return GetLocalString(Fish.Data, sEquipment + FISH_TACKLE_ALLOWED);
 }
 
 int CanUseFishingTackle(string sEquipment, string sTackle)
@@ -965,22 +1040,20 @@ void SetIsFishingTackleSlot(string sSlot)
     FishingDebug("Adding tackle slot " + sSlot);
 
     // Add the slot to a reference list
-    string sGlobalSlotList = GetLocalString(Fish.Data, FISH_TACKLE_SLOT);
-    sGlobalSlotList = AddListItem(sGlobalSlotList, sSlot);
-    SetLocalString(Fish.Data, FISH_TACKLE_SLOT, sGlobalSlotList);
+    AddLocalListItem(Fish.Data, FISH_TACKLE_SLOT, sSlot);
 
     // Note that the slot exists for quick lookup
     SetLocalInt(Fish.Data, FISH_TACKLE_SLOT + sSlot + FISH_DEFINED, TRUE);
 }
 
 // Sets the following for each <tackle> and <slot> combination:
-// Name              Type             Purpose
-// "TACKLE"          CSV string list  all <tackle> items
-// "SLOT"            CSV string list  all <slot> types
-// "SLOT<slot>"      CSV string list  all <tackle> of type <slot>
-// "<tackle>SLOT"    string           the <slot> for <tackle>
-// "SLOT<slot>"      int              whether <slot> is a defined tackle slot
-// "TACKLE<tackle>"  int              whether <tackle> is a defined tackle item
+// Name                     Type      Purpose
+// "TACKLE"                 CSV list  all <tackle> items
+// "SLOT"                   CSV list  all <slot> types
+// "SLOT<slot>"             CSV list  all <tackle> of type <slot>
+// "<tackle>SLOT"           string    the <slot> for <tackle>
+// "SLOT<slot>DEFINED"      int       whether <slot> is a defined tackle slot
+// "TACKLE<tackle>DEFINED"  int       whether <tackle> is a defined tackle item
 void SetIsFishingTackle(string sTackleList, string sSlot = "")
 {
     // If the slot is blank, the tackle type will be the slot
@@ -1040,7 +1113,7 @@ string GetFishingTackleSlot(string sTackle)
 
 int GetIsFishingTackle(string sType)
 {
-    FishingDebug("Checking if tackle type " + sType + " is in the list " + GetLocalString(Fish.Data, FISH_TACKLE));
+    FishingDebug("Checking if " + sType + " is in the list of tackle items: " + GetLocalString(Fish.Data, FISH_TACKLE));
     return GetLocalInt(Fish.Data, FISH_TACKLE + sType + FISH_DEFINED);
 }
 

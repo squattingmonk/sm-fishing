@@ -54,7 +54,7 @@ void OnFishingSetup()
     SetIsFishingTackle("hook_large", "hook");
     SetIsFishingTackle("bait, float, hook, line, sinker");
 
-    SetFishingTackleSlots("pole", "hook", "bait, float, line, sinker");
+    AddFishingTackleSlots("pole", "bait, float, hook, line, sinker", "hook");
 
 
     // ----- Fish Definitions --------------------------------------------------
