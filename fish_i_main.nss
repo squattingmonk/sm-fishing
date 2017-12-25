@@ -1694,7 +1694,9 @@ int CheckFishTackleSlots(string sFish)
             return FALSE;
         }
 
-        if (HasFishWhitelist(FISH_TACKLE, sFish) &&
+        // If the tackle slot is whitelisted, check if the tackle is whitelisted
+        if (InFishWhitelist(FISH_TACKLE_SLOT, sSlot, sFish) &&
+            HasFishWhitelist(FISH_TACKLE, sFish) &&
             !InFishWhitelist(FISH_TACKLE, sTackle, sFish))
         {
             FishingDebug("  " + sTackle + " was not found in the tackle whitelist for slot " + sSlot + ".");

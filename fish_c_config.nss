@@ -77,7 +77,7 @@ void OnFishingSetup()
 
     // ----- Tackle Definitions ------------------------------------------------
 
-    BlacklistFishTackle("hook_large", "trout");
+    WhitelistFishTackle("hook", "trout");
     WhitelistFishTackleSlot("bait", "bass");
 
     SetFishTackleModifier(-10, "hook_large", "bass");
