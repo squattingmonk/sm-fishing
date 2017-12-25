@@ -33,12 +33,12 @@ const string FISH_WP_GENERIC = "nw_waypoint001";
 // Local variables names.
 const string FISH_BLACKLIST       = "BLACKLIST";
 const string FISH_DEBUG           = "DEBUG";
-const string FISH_DEFINED         = "DEFINED";
 const string FISH_DISTANCE        = "DISTANCE";
 const string FISH_ENVIRONMENT     = "ENVIRONMENT";
 const string FISH_EQUIPMENT       = "EQUIPMENT";
 const string FISH_FREQ            = "FREQUENCY";
 const string FISH_MESSAGE         = "MSG";
+const string FISH_MOD             = "MOD";
 const string FISH_NAME            = "NAME";
 const string FISH_RESREF          = "RESREF";
 const string FISH_TACKLE          = "TACKLE";
@@ -1034,7 +1034,7 @@ int HasFishingTackleSlot(string sEquipment, string sSlot, int bRequiredOnly = FA
 void SetIsFishingTackleSlot(string sSlot)
 {
     if (sSlot == "" ||
-        GetLocalInt(Fish.Data, FISH_TACKLE_SLOT + sSlot + FISH_DEFINED))
+        GetLocalInt(Fish.Data, FISH_TACKLE_SLOT + sSlot))
         return;
 
     FishingDebug("Adding tackle slot " + sSlot);
@@ -1043,17 +1043,17 @@ void SetIsFishingTackleSlot(string sSlot)
     AddLocalListItem(Fish.Data, FISH_TACKLE_SLOT, sSlot);
 
     // Note that the slot exists for quick lookup
-    SetLocalInt(Fish.Data, FISH_TACKLE_SLOT + sSlot + FISH_DEFINED, TRUE);
+    SetLocalInt(Fish.Data, FISH_TACKLE_SLOT + sSlot, TRUE);
 }
 
 // Sets the following for each <tackle> and <slot> combination:
-// Name                     Type      Purpose
-// "TACKLE"                 CSV list  all <tackle> items
-// "SLOT"                   CSV list  all <slot> types
-// "SLOT<slot>"             CSV list  all <tackle> of type <slot>
-// "<tackle>SLOT"           string    the <slot> for <tackle>
-// "SLOT<slot>DEFINED"      int       whether <slot> is a defined tackle slot
-// "TACKLE<tackle>DEFINED"  int       whether <tackle> is a defined tackle item
+// Name              Type      Purpose
+// "TACKLE"          CSV list  all <tackle> items
+// "SLOT"            CSV list  all <slot> types
+// "SLOT<slot>"      CSV list  all <tackle> of type <slot>
+// "<tackle>SLOT"    string    the <slot> for <tackle>
+// "SLOT<slot>"      int       whether <slot> is a defined tackle slot
+// "TACKLE<tackle>"  int       whether <tackle> is a defined tackle item
 void SetIsFishingTackle(string sTackleList, string sSlot = "")
 {
     // If the slot is blank, the tackle type will be the slot
@@ -1073,7 +1073,7 @@ void SetIsFishingTackle(string sTackleList, string sSlot = "")
         sTackle = GetListItem(sTackleList, i);
 
         // If the tackle has already been defined, skip it
-        if (GetLocalInt(Fish.Data, FISH_TACKLE + sTackle + FISH_DEFINED))
+        if (GetLocalInt(Fish.Data, FISH_TACKLE + sTackle))
             continue;
 
         // If the tackle is its own slot name...
@@ -1097,7 +1097,7 @@ void SetIsFishingTackle(string sTackleList, string sSlot = "")
         SetLocalString(Fish.Data, sTackle + FISH_TACKLE_SLOT, sSlot);
 
         // Note that the slot exists for quick lookup
-        SetLocalInt(Fish.Data, FISH_TACKLE + sTackle + FISH_DEFINED, TRUE);
+        SetLocalInt(Fish.Data, FISH_TACKLE + sTackle, TRUE);
     }
 
     // Save the tackle lists
@@ -1114,7 +1114,7 @@ string GetFishingTackleSlot(string sTackle)
 int GetIsFishingTackle(string sType)
 {
     FishingDebug("Checking if " + sType + " is in the list of tackle items: " + GetLocalString(Fish.Data, FISH_TACKLE));
-    return GetLocalInt(Fish.Data, FISH_TACKLE + sType + FISH_DEFINED);
+    return GetLocalInt(Fish.Data, FISH_TACKLE + sType);
 }
 
 string GetFishingTackle(string sSlot = "", object oEquipment = OBJECT_INVALID)
@@ -1178,8 +1178,8 @@ int GetFishFrequency(string sFish)
 }
 
 // Sets the following for each <modifier> and <fish> combination:
-// Name                      Type  Purpose
-// "<fish><type><modifier>"  int   value of <modifier> to catch <fish>
+// Name                         Type  Purpose
+// "<fish><type><modifier>MOD"  int   value of <modifier> to catch <fish>
 void SetFishModifier(string sType, int nValue, string sModifierList, string sFishList)
 {
     string sModifier;
@@ -1187,13 +1187,13 @@ void SetFishModifier(string sType, int nValue, string sModifierList, string sFis
     for (i = 0; i < nCount; i++)
     {
         sModifier = GetListItem(sModifierList, i);
-        SetFishInt(sType + sModifier, nValue, sFishList);
+        SetFishInt(sType + sModifier + FISH_MOD, nValue, sFishList);
     }
 }
 
 int GetFishModifier(string sType, string sModifier, string sFish)
 {
-    return GetFishInt(sType + sModifier, sFish);
+    return GetFishInt(sType + sModifier + FISH_MOD, sFish);
 }
 
 void SetFishEnvironmentModifier(int nValue, string sEnvironmentList, string sFishList)
@@ -1250,7 +1250,7 @@ int AddFishListItem(string sListType, string sItemType, string sItem, string sFi
 
     // Check if the item has already been listed
     string sVarName = sItemType + sFish + sListType;
-    if (GetLocalInt(Fish.Data, sVarName + sItem + FISH_DEFINED))
+    if (GetLocalInt(Fish.Data, sVarName + sItem))
     {
         FishingDebug(sItem + " is already in " + sMessage + ". Skipping...");
         return FALSE;
@@ -1261,7 +1261,7 @@ int AddFishListItem(string sListType, string sItemType, string sItem, string sFi
     FishingDebug("Adding " + sItem + " to " + sMessage + ". Updated list: " + sList);
 
     // Allows us to short-circuit reading the list to see if the item is there
-    SetLocalInt(Fish.Data, sVarName + sItem + FISH_DEFINED, TRUE);
+    SetLocalInt(Fish.Data, sVarName + sItem, TRUE);
     return TRUE;
 }
 
@@ -1363,7 +1363,7 @@ int HasFishWhitelist(string sType, string sFish)
 
 int InFishWhitelist(string sType, string sItem, string sFish)
 {
-    return GetLocalInt(Fish.Data, sType + sFish + FISH_WHITELIST + sItem + FISH_DEFINED);
+    return GetLocalInt(Fish.Data, sType + sFish + FISH_WHITELIST + sItem);
 }
 
 string GetFishBlacklist(string sType, string sFish)
@@ -1378,7 +1378,7 @@ int HasFishBlacklist(string sType, string sFish)
 
 int InFishBlacklist(string sType, string sItem, string sFish)
 {
-    return GetLocalInt(Fish.Data, sType + sFish + FISH_BLACKLIST + sItem + FISH_DEFINED);
+    return GetLocalInt(Fish.Data, sType + sFish + FISH_BLACKLIST + sItem);
 }
 
 
