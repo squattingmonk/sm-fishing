@@ -38,11 +38,12 @@ const string FISH_DESCRIPTION     = "DESCRIPTION";
 const string FISH_DISTANCE        = "DISTANCE";
 const string FISH_ENVIRONMENT     = "ENVIRONMENT";
 const string FISH_EQUIPMENT       = "EQUIPMENT";
+const string FISH_FREQUENCY       = "FREQUENCY";
 const string FISH_MESSAGE         = "MSG";
 const string FISH_MOD             = "MOD";
 const string FISH_NAME            = "NAME";
 const string FISH_RESREF          = "RESREF";
-const string FISH_STACK          = "STACK";
+const string FISH_STACK           = "STACK";
 const string FISH_TACKLE          = "TACKLE";
 const string FISH_TACKLE_ALLOWED  = "ALLOWED";
 const string FISH_TACKLE_REQUIRED = "REQUIRED";
@@ -1240,9 +1241,10 @@ void SetFishingDistance(float fMax, string sEquipmentList = "")
 // ----- Fish Frequency Functions ----------------------------------------------
 
 // Sets the following for each <frequency> and <fish> combination:
-// Name      Type         Purpose
-// ""        string list  all fish
-// "<fish>"  int          the unmodified <frequency> at which <fish> appears
+// Name               Type         Purpose
+// ""                 string list  all fish
+// ""                 int          whether the fish has been added
+// "<fish>FREQUENCY"  int          the unmodified <frequency> at which <fish> appears
 void AddFish(int nFreq, string sFishList)
 {
     string sFish;
@@ -1251,8 +1253,13 @@ void AddFish(int nFreq, string sFishList)
     for (i = 0; i < nCount; i++)
     {
         sFish = GetListItem(sFishList, i);
-        if (AddListString(Fish.Data, sFish, "", TRUE))
-            SetLocalInt(Fish.Data, sFish, nFreq);
+        if (!GetLocalInt(Fish.Data, sFish))
+        {
+            AddListString(Fish.Data, sFish);
+            SetLocalInt(Fish.Data, sFish, TRUE);
+            SetLocalInt(Fish.Data, sFish + FISH_FREQUENCY, nFreq);
+            FishingDebug("Adding fish " + sFish + " with frequency " + IntToString(nFreq));
+        }
     }
 }
 
@@ -1268,7 +1275,7 @@ int GetFishCount()
 
 int GetFishFrequency(string sFish)
 {
-    return GetLocalInt(Fish.Data, sFish);
+    return GetLocalInt(Fish.Data, sFish + FISH_FREQUENCY);
 }
 
 string GetFishResRef(string sFish)
@@ -1744,11 +1751,11 @@ void InitializeFishingSystem(object oPC, object oItem)
 
         // If the user did not define any fish, add a default one
         if (!GetFishCount())
-            AddFish(50, FISH_DEFAULT);
+            AddFish(30, FISH_DEFAULT);
 
         // If the user did not define a max fishing distance default, set one
         if (GetFishingDistance("") <= 0.0)
-            SetFishingDistance(10.0);
+            SetFishingDistance(5.0);
     }
 }
 
@@ -1853,14 +1860,13 @@ void ActionFishEvent(int nEvent)
         {
             case FISH_EVENT_START:
                 PlaySound("as_na_splash1");
-                ActionPlayAnimation(ANIMATION_LOOPING_LISTEN, 1.0, IntToFloat(Random(6) + 4));
+                ActionPlayAnimation(ANIMATION_LOOPING_TALK_NORMAL, 1.0, IntToFloat(Random(10) + 4));
                 break;
 
             case FISH_EVENT_NIBBLE:
-                ActionWait(1.0f);
+                ActionPlayAnimation(ANIMATION_FIREFORGET_SALUTE);
                 ActionPlayAnimation(ANIMATION_LOOPING_SPASM, 0.1, 6.0);
                 ActionPlayAnimation(ANIMATION_FIREFORGET_SALUTE);
-                ActionWait(1.0f);
                 break;
 
             case FISH_EVENT_CATCH:
