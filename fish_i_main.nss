@@ -952,46 +952,85 @@ int HasFishingTackleSlot(string sEquipment, string sSlot, int bRequiredOnly = FA
     return HasListItem(sSlotList, sSlot);
 }
 
+// Internal function used by SetIsFishingTackle(). Adds a tackle slot to the
+// master tackle slot list if it does not already exist.
+void AddFishingTackleSlot(string sSlot)
+{
+    if (sSlot == "" ||
+        GetLocalInt(Fish.Data, FISH_TACKLE_SLOT + sSlot + FISH_DEFINED))
+        return;
+
+    FishingDebug("Adding tackle slot " + sSlot);
+
+    // Add the slot to a reference list
+    string sGlobalSlotList = GetLocalString(Fish.Data, FISH_TACKLE_SLOT);
+    sGlobalSlotList = AddListItem(sGlobalSlotList, sSlot);
+    SetLocalString(Fish.Data, FISH_TACKLE_SLOT, sGlobalSlotList);
+
+    // Note that the slot exists for quick lookup
+    SetLocalInt(Fish.Data, FISH_TACKLE_SLOT + sSlot + FISH_DEFINED, TRUE);
+}
+
 // Sets the following for each <tackle> and <slot> combination:
-// Name           Type         Purpose
-// "TACKLE"       string list  all <tackle> items
-// "SLOT"         string list  all <slot> types
-// "<SLOT><slot>" string list  all <tackle> of type <slot>
-// "<tackle>SLOT" string       the <slot> for <tackle>
+// Name              Type             Purpose
+// "TACKLE"          CSV string list  all <tackle> items
+// "SLOT"            CSV string list  all <slot> types
+// "SLOT<slot>"      CSV string list  all <tackle> of type <slot>
+// "<tackle>SLOT"    string           the <slot> for <tackle>
+// "SLOT<slot>"      int              whether <slot> is a defined tackle slot
+// "TACKLE<tackle>"  int              whether <tackle> is a defined tackle item
 void SetIsFishingTackle(string sTackleList, string sSlot = "")
 {
+    // If the slot is blank, the tackle type will be the slot
+    int bTackleIsSlot = (sSlot == "");
+
     // Add the tackle slot to a reference list.
-    if (sSlot != "")
-        AddListString(Fish.Data, sSlot, FISH_TACKLE_SLOT, TRUE);
+    if (!bTackleIsSlot)
+        AddFishingTackleSlot(sSlot);
 
     // Loop through the tackle types.
     string sTackle;
+    string sSlotTackleList = GetLocalString(Fish.Data, FISH_TACKLE_SLOT + sSlot);
+    string sGlobalTackleList = GetLocalString(Fish.Data, FISH_TACKLE);
     int i, nCount = CountList(sTackleList);
     for (i = 0; i < nCount; i++)
     {
         sTackle = GetListItem(sTackleList, i);
 
-        FishingDebug("Adding tackle type " + sTackle + " matching slot " + sSlot);
-        // Add the tackle to a global list so we know it is a tackle item
-        if (AddListString(Fish.Data, sTackle, FISH_TACKLE, TRUE))
-        {
-            if (sSlot == "")
-            {
-                // Add the tackle slot to a reference list.
-                AddListString(Fish.Data, sTackle, FISH_TACKLE_SLOT, TRUE);
+        // If the tackle has already been defined, skip it
+        if (GetLocalInt(Fish.Data, FISH_TACKLE + sTackle + FISH_DEFINED))
+            continue;
 
-                // Set the tackle's slot type and add it to a reference list.
-                SetLocalString(Fish.Data, sTackle + FISH_TACKLE_SLOT, sTackle);
-                AddListString(Fish.Data, sTackle, FISH_TACKLE_SLOT + sTackle);
-            }
-            else
-            {
-                // Set the tackle's slot type and add it to a reference list.
-                SetLocalString(Fish.Data, sTackle + FISH_TACKLE_SLOT, sSlot);
-                AddListString(Fish.Data, sTackle, FISH_TACKLE_SLOT + sSlot);
-            }
+        // If the tackle is its own slot name...
+        if (bTackleIsSlot)
+        {
+            sSlot = sTackle;
+            AddFishingTackleSlot(sSlot);
+
+            // Add the tackle to the slot and set it
+            sSlotTackleList = GetLocalString(Fish.Data, FISH_TACKLE_SLOT + sSlot);
+            sSlotTackleList = AddListItem(sSlotTackleList, sTackle);
+            SetLocalString(Fish.Data, FISH_TACKLE_SLOT + sSlot, sSlotTackleList);
         }
+        else
+            sSlotTackleList = AddListItem(sSlotTackleList, sTackle);
+
+        FishingDebug("Adding tackle type " + sTackle + " matching slot " + sSlot);
+
+        // Add the tackle item to a reference list
+        sGlobalTackleList = AddListItem(sGlobalTackleList, sTackle);
+
+        // Set the tackle's slot type
+        SetLocalString(Fish.Data, sTackle + FISH_TACKLE_SLOT, sSlot);
+
+        // Note that the slot exists for quick lookup
+        SetLocalInt(Fish.Data, FISH_TACKLE + sTackle + FISH_DEFINED, TRUE);
     }
+
+    // Save the tackle lists
+    SetLocalString(Fish.Data, FISH_TACKLE, sGlobalTackleList);
+    if (!bTackleIsSlot)
+        SetLocalString(Fish.Data, FISH_TACKLE_SLOT + sSlot, sSlotTackleList);
 }
 
 string GetFishingTackleSlot(string sTackle)
@@ -1001,8 +1040,8 @@ string GetFishingTackleSlot(string sTackle)
 
 int GetIsFishingTackle(string sType)
 {
-    FishingDebug("Checking if tackle type " + sType + " is in the list " + CompressList(Fish.Data, FISH_TACKLE));
-    return HasListString(Fish.Data, sType, FISH_TACKLE);
+    FishingDebug("Checking if tackle type " + sType + " is in the list " + GetLocalString(Fish.Data, FISH_TACKLE));
+    return GetLocalInt(Fish.Data, FISH_TACKLE + sType + FISH_DEFINED);
 }
 
 string GetFishingTackle(string sSlot = "", object oEquipment = OBJECT_INVALID)
