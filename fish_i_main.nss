@@ -29,18 +29,20 @@ Revision Summary:
 const string FISH_WP_DATA    = "fish_datapoint";
 const string FISH_WP_FISHING = "fish_fishingspot";
 const string FISH_WP_GENERIC = "nw_waypoint001";
+const string FISH_DEFAULT    = "nw_it_msmlmisc20";
 
 // Local variables names.
 const string FISH_BLACKLIST       = "BLACKLIST";
 const string FISH_DEBUG           = "DEBUG";
+const string FISH_DESCRIPTION     = "DESCRIPTION";
 const string FISH_DISTANCE        = "DISTANCE";
 const string FISH_ENVIRONMENT     = "ENVIRONMENT";
 const string FISH_EQUIPMENT       = "EQUIPMENT";
-const string FISH_FREQ            = "FREQUENCY";
 const string FISH_MESSAGE         = "MSG";
 const string FISH_MOD             = "MOD";
 const string FISH_NAME            = "NAME";
 const string FISH_RESREF          = "RESREF";
+const string FISH_STACK          = "STACK";
 const string FISH_TACKLE          = "TACKLE";
 const string FISH_TACKLE_ALLOWED  = "ALLOWED";
 const string FISH_TACKLE_REQUIRED = "REQUIRED";
@@ -259,6 +261,15 @@ string GetFishingTackle(string sSlot = "", object oEquipment = OBJECT_INVALID);
 
 // ---< SetFishingDistance >---
 // ---< fish_i_main >---
+// Gets the maximum distance, in meters, that a PC may be from a waypoint
+// fishing spot to fish using sEquipment. If sEquipment is blank, will get a
+// default fishing distance.
+// Note: the PC will always be able to fish in a trigger fishing spot if he is
+// inside of it.
+float GetFishingDistance(string sEquipment);
+
+// ---< SetFishingDistance >---
+// ---< fish_i_main >---
 // Sets the maximum distance, in meters, that a PC may be from a waypoint
 // fishing spot to fish using any of the listed equipment.
 // Parameters:
@@ -266,7 +277,7 @@ string GetFishingTackle(string sSlot = "", object oEquipment = OBJECT_INVALID);
 //   with a waypoint fishing spot regardless of how far he is from it.
 // - sEquipmentList: a comma-separated list of equipment types that have this
 //   maximum distance. If this value is blank, will set a default fishing
-//   distance for any eqipment type with no explicit setting.
+//   distance for any equipment type with no explicit setting.
 // Note: the PC will always be able to fish in a trigger fishing spot if he is
 // inside of it.
 void SetFishingDistance(float fMax, string sEquipmentList = "");
@@ -307,6 +318,76 @@ int GetFishCount();
 // environment, equipment, or tackle and can be modified by the builder using
 // the OnFishNibble() config function.
 int GetFishFrequency(string sFish);
+
+// ---< GetFishResRef >---
+// ---< fish_i_main >---
+// Gets the resref used to create sFish on a successful catch. If the value has
+// not been defined for sFish, any globally defined value will be inherited.
+string GetFishResRef(string sFish);
+
+// ---< SetFishResRef >---
+// ---< fish_i_main >---
+// Sets the resref used to create every fish in sFishList on a successful catch.
+// If sResRef is blank, any created fish will use the fish's ID as its resref.
+// If sFishList is blank, the resref will be defined globally: any fish without
+// an explicitly defined resref will use sResRef instead.
+void SetFishResRef(string sResRef, string sFishList = "");
+
+// ---< GetFishName >---
+// ---< fish_i_main >---
+// Gets the name applied to sFish on a successful catch. If the value has not
+// been defined for sFish, any globally defined value will be inherited.
+string GetFishName(string sFish);
+
+// ---< SetFishName >---
+// ---< fish_i_main >---
+// Sets the name applied to every fish in sFishList on a successful catch. If
+// sName is blank, any created fish will not have its name changed on creation.
+// If sFishList is blank, the name will be defined globally: any fish without
+// an explicitly defined name will use sName instead.
+void SetFishName(string sName, string sFishList = "");
+
+// ---< GetFishTag >---
+// ---< fish_i_main >---
+// Gets the tag applied to sFish on a successful catch. If the value has not
+// been defined for sFish, any globally defined value will be inherited.
+string GetFishTag(string sFish);
+
+// ---< SetFishTag >---
+// ---< fish_i_main >---
+// Sets the tag applied to every fish in sFishList on a successful catch. If
+// sTag is blank, any created fish will not have its tag changed on creation.
+// If sFishList is blank, the tag will be defined globally: any fish without
+// an explicitly defined tag will use sTag instead.
+void SetFishTag(string sTag, string sFishList = "");
+
+// ---< GetFishDescription >---
+// ---< fish_i_main >---
+// Gets the description applied to sFish on a successful catch. If the value has
+// not been defined for sFish, any globally defined value will be inherited.
+string GetFishDescription(string sFish);
+
+// ---< SetFishName >---
+// ---< fish_i_main >---
+// Sets the name applied to every fish in sFishList on a successful catch. If
+// sName is blank, any created fish will not have its name changed on creation.
+// If sFishList is blank, the name will be defined globally: any fish without
+// an explicitly defined name will use sName instead.
+void SetFishDescription(string sDescription, string sFishList = "");
+
+// ---< GetFishStackSize >---
+// ---< fish_i_main >---
+// Gets the stack size used to create sFish on a successful catch. If the value
+// has not been defined for sFish, any globally defined value will be inherited.
+int GetFishStackSize(string sFish);
+
+// ---< SetFishStackSize >---
+// ---< fish_i_main >---
+// Sets the stack size used to create every fish in sFishList on a successful
+// catch. If nStackSize is < 1, any created fish will use a stack size of 1. If
+// sFishList is blank, the stack size will be defined globally: any fish without
+// an explicitly defined stack size will use nStackSize instead.
+void SetFishStackSize(int nStackSize, string sFishList = "");
 
 // ---< SetFishModifier >---
 // ---< fish_i_main >---
@@ -511,14 +592,17 @@ int InFishBlacklist(string sType, string sItem, string sFish);
 //   can also use your own event numbers, as long as they are > 10.
 // - sKeyList: a comma-separated list of keys to identify the proper message to
 //   send. If sKeyList is blank, the message will be defined globally.
-//   - For the START, NIBBLE, CATCH, NO_NIBBLE, and NO_CATCH events, the key
-//     should be an equipment type.
-//   - The NO_TACKLE event may be either an equipment type or a tackle slot.
+// - sKey: a key to identify the proper message to return.
+//   - For the START, NO_NIBBLE, and BAD_SPOT events, the key should be an
+//     equipment type.
+//   - For the NIBBLE, CATCH, and NO_CATCH events, the key should be an
+//     equipment type or a fish.
+//   - The NO_TACKLE, USE_TACKLE, or BAD_TARGET events may be either an
+//     equipment type or a tackle slot.
 //   - Other events are up to the builder to implement. Key them as you wish.
+//   - If blank, will return a globally defined message for this event.
 //   - Keys will inherit globally defined messages, even if the key has
 //     explicitly defined messages.
-//   - Keys can be repeated multiple times to increase the frequency with which
-//     the message appears when using GetFishMessage().
 // - sMessage: the message to display to the PC.
 // Example usage:
 // AddFishMessage(FISH_EVENT_START, "pole", "You cast your line. Now to wait.");
@@ -535,9 +619,12 @@ void AddFishMessage(int nEvent, string sKeyList, string sMessage);
 // - nEvent: a FISH_EVENT_* constant matching when the message will be sent. You
 //   can also use your own event numbers, as long as they are > 10.
 // - sKey: a key to identify the proper message to return.
-//   - For the START, NIBBLE, CATCH, NO_NIBBLE, and NO_CATCH events, the key
-//     should be an equipment type.
-//   - The NO_TACKLE event may be either an equipment type or a tackle slot.
+//   - For the START, NO_NIBBLE, and BAD_SPOT events, the key should be an
+//     equipment type.
+//   - For the NIBBLE, CATCH, and NO_CATCH events, the key should be an
+//     equipment type or a fish.
+//   - The NO_TACKLE, USE_TACKLE, or BAD_TARGET events may be either an
+//     equipment type or a tackle slot.
 //   - Other events are up to the builder to implement. Key them as you wish.
 //   - If blank, will return a globally defined message for this event.
 //   - Keys will inherit globally defined messages, even if the key has
@@ -556,9 +643,12 @@ string GetFishMessage(int nEvent, string sKey = "");
 // - nEvent: a FISH_EVENT_* constant matching when the message will be sent. You
 //   can also use your own event numbers, as long as they are > 10.
 // - sKey: a key to identify the proper message to return.
-//   - For the START, NIBBLE, CATCH, NO_NIBBLE, and NO_CATCH events, the key
-//     should be an equipment type.
-//   - The NO_TACKLE event may be either an equipment type or a tackle slot.
+//   - For the START, NO_NIBBLE, and BAD_SPOT events, the key should be an
+//     equipment type.
+//   - For the NIBBLE, CATCH, and NO_CATCH events, the key should be an
+//     equipment type or a fish.
+//   - The NO_TACKLE, USE_TACKLE, or BAD_TARGET events may be either an
+//     equipment type or a tackle slot.
 //   - Other events are up to the builder to implement. Key them as you wish.
 //   - If blank, will return a globally defined message for this event.
 //   - Keys will inherit globally defined messages, even if the key has
@@ -629,11 +719,10 @@ void ActionRemoveFishingTackle(string sTackle, int bReplace);
 
 // ---< ActionCreateFish >---
 // ---< fish_i_main >---
-// Creates a fish from sResRef with an optional prefix sPrefix on the PC. Plays
-// the FISH_EVENT_CATCH message for sResRef, replacing the wildcard "$fish" with
-// the name of the newly created fish. This is inserted into the action queue so
-// the PC will not catch the fish if he aborts the fishing sequence.
-void ActionCreateFish(string sResRef, string sPrefix = "");
+// Creates sFish on the PC. Plays the FISH_EVENT_CATCH message for sFish. This
+// is inserted into the action queue so the PC will not catch the fish if he
+// aborts the fishing sequence.
+void ActionCreateFish(string sFish);
 
 // ---< ObjectToAction >---
 // ---< fish_i_main >---
@@ -1137,6 +1226,11 @@ string GetFishingTackle(string sSlot = "", object oEquipment = OBJECT_INVALID)
     return sTackleList;
 }
 
+float GetFishingDistance(string sEquipment)
+{
+    return GetFishFloat(FISH_DISTANCE, sEquipment);
+}
+
 void SetFishingDistance(float fMax, string sEquipmentList = "")
 {
     SetFishFloat(FISH_DISTANCE, fMax, sEquipmentList);
@@ -1175,6 +1269,56 @@ int GetFishCount()
 int GetFishFrequency(string sFish)
 {
     return GetLocalInt(Fish.Data, sFish);
+}
+
+string GetFishResRef(string sFish)
+{
+    return GetFishString(FISH_RESREF, sFish);
+}
+
+void SetFishResRef(string sResRef, string sFishList = "")
+{
+    SetFishString(FISH_RESREF, sResRef, sFishList);
+}
+
+string GetFishName(string sFish)
+{
+    return GetFishString(FISH_NAME, sFish);
+}
+
+void SetFishName(string sName, string sFishList = "")
+{
+    SetFishString(FISH_NAME, sName, sFishList);
+}
+
+string GetFishTag(string sFish)
+{
+    return GetFishString(FISH_TAG, sFish);
+}
+
+void SetFishTag(string sTag, string sFishList = "")
+{
+    SetFishString(FISH_TAG, sTag, sFishList);
+}
+
+string GetFishDescription(string sFish)
+{
+    return GetFishString(FISH_DESCRIPTION, sFish);
+}
+
+void SetFishDescription(string sDescription, string sFishList = "")
+{
+    SetFishString(FISH_DESCRIPTION, sDescription, sFishList);
+}
+
+int GetFishStackSize(string sFish)
+{
+    return GetFishInt(FISH_STACK, sFish);
+}
+
+void SetFishStackSize(int nStackSize, string sFishList = "")
+{
+    SetFishInt(FISH_STACK, nStackSize, sFishList);
 }
 
 // Sets the following for each <modifier> and <fish> combination:
@@ -1236,9 +1380,10 @@ int GetFishTackleModifier(string sTackle, string sFish)
     return GetFishModifier(FISH_TACKLE, sTackle, sFish);
 }
 
-// Internal function used by Whitelist/BlacklistFish* functions. It should not
-// be used by the builder. Adds an item to the black/whitelist if it is not
-// already there. Returns whether the addition was successful.
+// Internal function used by AddFishListItems(). It should not be used by the
+// builder. Adds an item to the black/whitelist if it is not already there.
+// Returns whether the addition was successful.
+// TODO: make this a public function for making custom lists.
 int AddFishListItem(string sListType, string sItemType, string sItem, string sFish)
 {
     // Sanity check
@@ -1265,6 +1410,11 @@ int AddFishListItem(string sListType, string sItemType, string sItem, string sFi
     return TRUE;
 }
 
+// Internal function used by the White/BlaclistFish() functions. It should not
+// be used by the builder. Adds an item to the black/whitelist of each fish in
+// sFishList if it is not already there. Returns whether the addition was
+// successful.
+// TODO: make this a public function for making custom lists.
 void AddFishListItems(string sListType, string sItemType, string sItemList, string sFishList)
 {
     string sFish, sItem;
@@ -1543,16 +1693,28 @@ void ActionRemoveFishingTackle(string sTackle, int bReplace)
 }
 
 // Private function for ActionCreateFish()
-void CreateFish(string sResRef, string sPrefix = "")
+void CreateFish(string sFish)
 {
-    object oFish = CreateItemOnObject(sPrefix + sResRef);
-    string sMessage = GetFishMessage(FISH_EVENT_CATCH, sResRef);
-    FloatingTextStringOnCreature(sMessage, OBJECT_SELF, FALSE);
+    FloatingFishMessage(FISH_EVENT_CATCH, sFish);
+
+    string sResRef = GetFishResRef(sFish);
+    if (sResRef == "")
+        sResRef = sFish;
+
+    int nStackSize = GetFishStackSize(sFish);
+    if (nStackSize < 1)
+        nStackSize = 1;
+
+    string sTag  = GetFishTag(sFish);
+    object oFish = CreateItemOnObject(sResRef, Fish.PC, nStackSize, sTag);
+
+    SetName(oFish, GetFishName(sFish));
+    SetDescription(oFish, GetFishDescription(sFish));
 }
 
-void ActionCreateFish(string sResRef, string sPrefix = "")
+void ActionCreateFish(string sFish)
 {
-    ActionDoCommand(CreateFish(sResRef, sPrefix));
+    ActionDoCommand(CreateFish(sFish));
 }
 
 void ObjectToAction(object oObject){}
@@ -1579,6 +1741,14 @@ void InitializeFishingSystem(object oPC, object oItem)
 
         // Run our config function.
         OnFishingSetup();
+
+        // If the user did not define any fish, add a default one
+        if (!GetFishCount())
+            AddFish(50, FISH_DEFAULT);
+
+        // If the user did not define a max fishing distance default, set one
+        if (GetFishingDistance("") <= 0.0)
+            SetFishingDistance(10.0);
     }
 }
 

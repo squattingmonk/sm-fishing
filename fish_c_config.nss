@@ -61,6 +61,12 @@ void OnFishingSetup()
 
     AddFish(20, "trout, bass");
 
+    SetFishResRef(FISH_DEFAULT);
+    SetFishResRef("fish_trout", "fish_trout");
+
+    SetFishName("Bass", "bass");
+    SetFishDescription("What a beauty!", "bass");
+
 
     // ----- Environment Definitions -------------------------------------------
 
@@ -96,7 +102,7 @@ void OnFishingSetup()
     AddFishMessage(FISH_EVENT_NIBBLE,    "pole", "You feel a tug on your line!");
     AddFishMessage(FISH_EVENT_NIBBLE,    "pole", "Something took your bait!");
     AddFishMessage(FISH_EVENT_CATCH,     "pole", "After a brief struggle, you reel in the fish.");
-    AddFishMessage(FISH_EVENT_NO_CATCH,  "pole", "The line goes slack. It look like he got away.");
+    AddFishMessage(FISH_EVENT_NO_CATCH,  "pole", "The line goes slack. It looks like he got away.");
 
     AddFishMessage(FISH_EVENT_START,  "spear", "You ready your spear, eyes intent on the water...");
     AddFishMessage(FISH_EVENT_NIBBLE, "spear", "There's a fish!");
@@ -104,6 +110,9 @@ void OnFishingSetup()
 
     AddFishMessage(FISH_EVENT_NO_CATCH,  "pole, spear", "Dammit! He got away.");
     AddFishMessage(FISH_EVENT_NO_NIBBLE, "pole, spear", "You failed to catch anything. Better luck next time!");
+
+    AddFishMessage(FISH_EVENT_CATCH, "trout", "You caught a little trout!");
+    AddFishMessage(FISH_EVENT_CATCH, "bass",  "You caught a bass!");
 }
 
 // This is a configurable function that runs when the PC uses a fishing tackle
@@ -203,9 +212,7 @@ int OnFishNibbleSuccess(string sFish)
 // stored fishing skill, or even just giving the player some XP.
 int OnFishCatch(string sFish)
 {
-    // Add a "fish_" as a prefix to the resref.
-    ActionCreateFish(sFish, "fish_");
-    return FALSE;
+    return TRUE;
 }
 
 // This is a configurable function to handle the animations for different stages
