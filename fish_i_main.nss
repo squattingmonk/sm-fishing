@@ -948,13 +948,15 @@ int CanUseFishingTackle(string sEquipment, string sTackle)
 
 int HasFishingTackleSlot(string sEquipment, string sSlot, int bRequiredOnly = FALSE)
 {
-    string sSlotList = GetFishingTackleSlots(sEquipment, bRequiredOnly);
-    return HasListItem(sSlotList, sSlot);
+    if (bRequiredOnly)
+        return GetLocalInt(Fish.Data, sEquipment + FISH_TACKLE_REQUIRED + sSlot);
+
+    return GetLocalInt(Fish.Data, sEquipment + FISH_TACKLE_ALLOWED + sSlot);
 }
 
 // Internal function used by SetIsFishingTackle(). Adds a tackle slot to the
 // master tackle slot list if it does not already exist.
-void AddFishingTackleSlot(string sSlot)
+void SetIsFishingTackleSlot(string sSlot)
 {
     if (sSlot == "" ||
         GetLocalInt(Fish.Data, FISH_TACKLE_SLOT + sSlot + FISH_DEFINED))
@@ -986,7 +988,7 @@ void SetIsFishingTackle(string sTackleList, string sSlot = "")
 
     // Add the tackle slot to a reference list.
     if (!bTackleIsSlot)
-        AddFishingTackleSlot(sSlot);
+        SetIsFishingTackleSlot(sSlot);
 
     // Loop through the tackle types.
     string sTackle;
@@ -1005,12 +1007,10 @@ void SetIsFishingTackle(string sTackleList, string sSlot = "")
         if (bTackleIsSlot)
         {
             sSlot = sTackle;
-            AddFishingTackleSlot(sSlot);
+            SetIsFishingTackleSlot(sSlot);
 
-            // Add the tackle to the slot and set it
-            sSlotTackleList = GetLocalString(Fish.Data, FISH_TACKLE_SLOT + sSlot);
-            sSlotTackleList = AddListItem(sSlotTackleList, sTackle);
-            SetLocalString(Fish.Data, FISH_TACKLE_SLOT + sSlot, sSlotTackleList);
+            // Add the tackle to the slot's master list
+            AddLocalListItem(Fish.Data, FISH_TACKLE_SLOT + sSlot, sTackle);
         }
         else
             sSlotTackleList = AddListItem(sSlotTackleList, sTackle);
@@ -1184,10 +1184,8 @@ int AddFishListItem(string sListType, string sItemType, string sItem, string sFi
     }
 
     // This is the master list of items in the sItemType white/blacklist
-    string sList = GetLocalString(Fish.Data, sVarName);
-    FishingDebug("Adding " + sItem + " to " + sMessage + ". Current list: " + sList);
-    sList = AddListItem(sList, sItem);
-    SetLocalString(Fish.Data, sVarName, sList);
+    string sList = AddLocalListItem(Fish.Data, sVarName, sItem);
+    FishingDebug("Adding " + sItem + " to " + sMessage + ". Updated list: " + sList);
 
     // Allows us to short-circuit reading the list to see if the item is there
     SetLocalInt(Fish.Data, sVarName + sItem + FISH_DEFINED, TRUE);
