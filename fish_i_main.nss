@@ -484,36 +484,36 @@ void WhitelistFish(string sType, string sWhitelist, string sFishList);
 // ---< WhitelistFishEnvironment >---
 // ---< fish_i_main >---
 // Sets every fish in sFishList as being catchable only when fishing in an
-// environment in sWhitelist. If a fishing spot has multiple environments, only
-// one must be present for the fish to be able to be caught.
-void WhitelistFishEnvironment(string sWhitelist, string sFishList);
+// environment in sEnvironmentList. If a fishing spot has multiple environments,
+// only one must be present for the fish to be able to be caught.
+void WhitelistFishEnvironment(string sEnvironmentList, string sFishList);
 
 // ---< WhitelistFishEquipment >---
 // ---< fish_i_main >---
 // Sets every fish in sFishList as being catchable only when fishing with
-// equipment in sWhitelist.
-void WhitelistFishEquipment(string sWhitelist, string sFishList);
+// equipment in sEquipmentList.
+void WhitelistFishEquipment(string sEquipmentList, string sFishList);
 
 // ---< WhitelistFishTackleSlot >---
 // ---< fish_i_main >---
 // Sets every fish in sFishList as being catchable only when fishing with tackle
-// in all slots found in sWhitelist. The PC will not be penalized for not having
+// in all slots found in sSlotList. The PC will not be penalized for not having
 // tackle his equipment does not support; if you wish this to happen, limit the
 // equipment the fish can be caught with using WhitelistFishEquipment(). If the
 // PC's equipment supports multiple tackle slots found in this list, all of them
 // must be filled to catch this fish.
-void WhitelistFishTackleSlot(string sWhitelist, string sFishList);
+void WhitelistFishTackleSlot(string sSlotList, string sFishList);
 
 // ---< WhitelistFishTackle >---
 // ---< fish_i_main >---
 // Sets every fish in sFishList as being catchable only when fishing with tackle
-// found in sWhitelist. The PC will not be penalized for not having tackle his
+// found in sTackleList. The PC will not be penalized for not having tackle his
 // equipment does not support; if you wish this to happen, limit the equipment
 // the fish can be caught with using WhitelistFishEquipment(). Any tackle slot
 // which can be filled by a tackle item in this list must be so. If there is no
 // tackle in this list that can fill a given slot, the PC may use any tackle in
 // that slot to catch the fish.
-void WhitelistFishTackle(string sWhitelist, string sFishList);
+void WhitelistFishTackle(string sTackleList, string sFishList);
 
 // ---< BlacklistFish >---
 // ---< fish_i_main >---
@@ -525,28 +525,28 @@ void BlacklistFish(string sType, string sBlacklist, string sFishList);
 // ---< BlacklistFishEnvironment >---
 // ---< fish_i_main >---
 // Sets every fish in sFishList as not being catchable only when fishing in an
-// environment in sBlacklist. If a fishing spot has multiple environments, only
-// one must be present for the fish to not be able to be caught.
-void BlacklistFishEnvironment(string sBlacklist, string sFishList);
+// environment in sEnvironmentList. If a fishing spot has multiple environments,
+// only one must be present for the fish to not be able to be caught.
+void BlacklistFishEnvironment(string sEnvironmentList, string sFishList);
 
 // ---< BlacklistFishEquipment >---
 // ---< fish_i_main >---
 // Sets every fish in sFishList as not being catchable when fishing with
-// equipment in sBlacklist.
-void BlacklistFishEquipment(string sBlacklist, string sFishList);
+// equipment in sEquipmentList.
+void BlacklistFishEquipment(string sEquipmentList, string sFishList);
 
 // ---< BlacklistFishTackleSlot >---
 // ---< fish_i_main >---
 // Sets every fish in sFishList as not being catchable when fishing with tackle
-// in any slot found in sBlacklist. If the PC's equipment supports multiple
+// in any slot found in sSlotList. If the PC's equipment supports multiple
 // tackle slots found in this list, all of them must be empty to catch this fish.
-void BlacklistFishTackleSlot(string sBlacklist, string sFishList);
+void BlacklistFishTackleSlot(string sSlotList, string sFishList);
 
 // ---< BlacklistFishTackle >---
 // ---< fish_i_main >---
 // Sets every fish in sFishList as not being catchable when fishing with tackle
-// found in sBlacklist.
-void BlacklistFishTackle(string sBlacklist, string sFishList);
+// found in sTackleList.
+void BlacklistFishTackle(string sTackleList, string sFishList);
 
 // ---< GetFishWhitelist >---
 // ---< fish_i_main >---
