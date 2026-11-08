@@ -1,0 +1,114 @@
+{
+  "__data_type": "GIC ",
+  "Creature List": {
+    "type": "list",
+    "value": [
+      {
+        "__struct_id": 4,
+        "Comment": {
+          "type": "cexostring",
+          "value": ""
+        }
+      }
+    ]
+  },
+  "Door List": {
+    "type": "list",
+    "value": [
+      {
+        "__struct_id": 8,
+        "Comment": {
+          "type": "cexostring",
+          "value": "RuralExit"
+        }
+      }
+    ]
+  },
+  "Encounter List": {
+    "type": "list",
+    "value": []
+  },
+  "List": {
+    "type": "list",
+    "value": []
+  },
+  "Placeable List": {
+    "type": "list",
+    "value": []
+  },
+  "SoundList": {
+    "type": "list",
+    "value": []
+  },
+  "StoreList": {
+    "type": "list",
+    "value": [
+      {
+        "__struct_id": 11,
+        "Comment": {
+          "type": "cexostring",
+          "value": ""
+        }
+      }
+    ]
+  },
+  "TriggerList": {
+    "type": "list",
+    "value": [
+      {
+        "__struct_id": 1,
+        "Comment": {
+          "type": "cexostring",
+          "value": "This trigger marks an area where a PC may fish. To set the type of environment the trigger represents, replace the name parameter with the name of the environment the trigger represents.\r\n\r\nEnvironments can inherit fish from parent environments. Inheriting fish allows you to specify that one environment is a subset of another environment. For example, \"river\" and \"lake\" may both be types of \"freshwater\" environments. To set up inheritance, use the InheritFish() function in the fish_c_config script's OnFishingSetup() config function.\r\n\r\nIf you wish to combine multiple environments without explicitly setting up inheritance, set the trigger name to a comma-separated list of environment names. Environments towards the beginning of the list will take precedence over environments towards the end of the list for the purpose of determining fish frequency."
+        }
+      }
+    ]
+  },
+  "WaypointList": {
+    "type": "list",
+    "value": [
+      {
+        "__struct_id": 5,
+        "Comment": {
+          "type": "cexostring",
+          "value": "This waypoint marks a location where a PC may fish. To set the type of environment the location represents, replace the name parameter with the name of the environment the waypoint represents.\r\n\r\nEnvironments can inherit fish from parent environments. Inheriting fish allows you to specify that one environment is a subset of another environment. For example, \"river\" and \"lake\" may both be types of \"freshwater\" environments. To set up inheritance, use the InheritFish() function in the fish_c_config script's OnFishingSetup() config function.\r\n\r\nIf you wish to combine multiple environments without explicitly setting up inheritance, set the waypoint name to a comma-separated list of environment names. Environments towards the beginning of the list will take precedence over environments towards the end of the list for the purpose of determining fish frequency."
+        }
+      },
+      {
+        "__struct_id": 5,
+        "Comment": {
+          "type": "cexostring",
+          "value": "This waypoint marks a location where a PC may fish. To set the type of environment the location represents, replace the name parameter with the name of the environment the waypoint represents.\r\n\r\nEnvironments can inherit fish from parent environments. Inheriting fish allows you to specify that one environment is a subset of another environment. For example, \"river\" and \"lake\" may both be types of \"freshwater\" environments. To set up inheritance, use the InheritFish() function in the fish_c_config script's OnFishingSetup() config function.\r\n\r\nIf you wish to combine multiple environments without explicitly setting up inheritance, set the waypoint name to a comma-separated list of environment names. Environments towards the beginning of the list will take precedence over environments towards the end of the list for the purpose of determining fish frequency."
+        }
+      },
+      {
+        "__struct_id": 5,
+        "Comment": {
+          "type": "cexostring",
+          "value": "This waypoint marks a location where a PC may fish. To set the type of environment the location represents, replace the name parameter with the name of the environment the waypoint represents.\r\n\r\nEnvironments can inherit fish from parent environments. Inheriting fish allows you to specify that one environment is a subset of another environment. For example, \"river\" and \"lake\" may both be types of \"freshwater\" environments. To set up inheritance, use the InheritFish() function in the fish_c_config script's OnFishingSetup() config function.\r\n\r\nIf you wish to combine multiple environments without explicitly setting up inheritance, set the waypoint name to a comma-separated list of environment names. Environments towards the beginning of the list will take precedence over environments towards the end of the list for the purpose of determining fish frequency."
+        }
+      },
+      {
+        "__struct_id": 5,
+        "Comment": {
+          "type": "cexostring",
+          "value": "This waypoint marks a location where a PC may fish. To set the type of environment the location represents, replace the name parameter with the name of the environment the waypoint represents.\r\n\r\nEnvironments can inherit fish from parent environments. Inheriting fish allows you to specify that one environment is a subset of another environment. For example, \"river\" and \"lake\" may both be types of \"freshwater\" environments. To set up inheritance, use the InheritFish() function in the fish_c_config script's OnFishingSetup() config function.\r\n\r\nIf you wish to combine multiple environments without explicitly setting up inheritance, set the waypoint name to a comma-separated list of environment names. Environments towards the beginning of the list will take precedence over environments towards the end of the list for the purpose of determining fish frequency."
+        }
+      },
+      {
+        "__struct_id": 5,
+        "Comment": {
+          "type": "cexostring",
+          "value": "This waypoint marks a location where a PC may fish. To set the type of environment the location represents, replace the name parameter with the name of the environment the waypoint represents.\r\n\r\nEnvironments can inherit fish from parent environments. Inheriting fish allows you to specify that one environment is a subset of another environment. For example, \"river\" and \"lake\" may both be types of \"freshwater\" environments. To set up inheritance, use the InheritFish() function in the fish_c_config script's OnFishingSetup() config function.\r\n\r\nIf you wish to combine multiple environments without explicitly setting up inheritance, set the waypoint name to a comma-separated list of environment names. Environments towards the beginning of the list will take precedence over environments towards the end of the list for the purpose of determining fish frequency."
+        }
+      },
+      {
+        "__struct_id": 5,
+        "Comment": {
+          "type": "cexostring",
+          "value": "This waypoint marks a location where a PC may fish. To set the type of environment the location represents, replace the name parameter with the name of the environment the waypoint represents.\r\n\r\nEnvironments can inherit fish from parent environments. Inheriting fish allows you to specify that one environment is a subset of another environment. For example, \"river\" and \"lake\" may both be types of \"freshwater\" environments. To set up inheritance, use the InheritFish() function in the fish_c_config script's OnFishingSetup() config function.\r\n\r\nIf you wish to combine multiple environments without explicitly setting up inheritance, set the waypoint name to a comma-separated list of environment names. Environments towards the beginning of the list will take precedence over environments towards the end of the list for the purpose of determining fish frequency."
+        }
+      }
+    ]
+  }
+}

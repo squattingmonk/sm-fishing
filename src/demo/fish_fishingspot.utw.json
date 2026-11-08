@@ -1,0 +1,51 @@
+{
+  "__data_type": "UTW ",
+  "Appearance": {
+    "type": "byte",
+    "value": 3
+  },
+  "Comment": {
+    "type": "cexostring",
+    "value": "This waypoint marks a location where a PC may fish. To set the type of environment the location represents, replace the name parameter with the name of the environment the waypoint represents.\r\n\r\nEnvironments can inherit fish from parent environments. Inheriting fish allows you to specify that one environment is a subset of another environment. For example, \"river\" and \"lake\" may both be types of \"freshwater\" environments. To set up inheritance, use the AddFish() function in the fish_c_config script's OnFishingSetup() config function.\r\n\r\nIf you wish to combine multiple environments without explicitly setting up inheritance, set the waypoint name to a list of environment names separeted by + (e.g., lake + river + pond). Environments towards the beginning of the list will take precedence over environments towards the end of the list for the purpose of determining fish frequency."
+  },
+  "Description": {
+    "type": "cexolocstring",
+    "value": {
+      "0": ""
+    }
+  },
+  "HasMapNote": {
+    "type": "byte",
+    "value": 0
+  },
+  "LinkedTo": {
+    "type": "cexostring",
+    "value": ""
+  },
+  "LocalizedName": {
+    "type": "cexolocstring",
+    "value": {
+      "0": "Fishing Spot"
+    }
+  },
+  "MapNote": {
+    "type": "cexolocstring",
+    "value": {}
+  },
+  "MapNoteEnabled": {
+    "type": "byte",
+    "value": 0
+  },
+  "PaletteID": {
+    "type": "byte",
+    "value": 0
+  },
+  "Tag": {
+    "type": "cexostring",
+    "value": "fish_fishingspot"
+  },
+  "TemplateResRef": {
+    "type": "resref",
+    "value": "fish_fishingspot"
+  }
+}
